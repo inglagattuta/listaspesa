@@ -150,12 +150,15 @@
       items: [],
       frequentItems: [],
       showFrequent: true,
-      newItem: ''
+      newItem: '',
+      message: null,
+      showMessageInput: false
     };
 
     // Riferimenti Firebase
     const itemsRef = ref(db, 'shoppingList');
     const frequentRef = ref(db, 'frequentItems');
+    const messageRef = ref(db, 'familyMessage');
 
     // Ascolta cambiamenti Firebase
     onValue(itemsRef, (snapshot) => {
@@ -167,6 +170,11 @@
     onValue(frequentRef, (snapshot) => {
       const data = snapshot.val();
       state.frequentItems = data ? Object.keys(data).map(key => ({id: key, ...data[key]})) : [];
+      render();
+    });
+
+    onValue(messageRef, (snapshot) => {
+      state.message = snapshot.val();
       render();
     });
 
@@ -242,6 +250,24 @@
       }
     }
 
+    async function saveMessage() {
+      const messageText = document.getElementById('messageInput')?.value.trim();
+      if (!messageText) return;
+      
+      await set(messageRef, {
+        text: messageText,
+        author: 'Famiglia',
+        timestamp: new Date().toISOString()
+      });
+      
+      state.showMessageInput = false;
+    }
+
+    async function deleteMessage() {
+      await remove(messageRef);
+      state.showMessageInput = false;
+    }
+
     // Render
     function render() {
       const uncheckedCount = state.items.filter(i => !i.checked).length;
@@ -251,6 +277,63 @@
       const app = document.getElementById('app');
       app.innerHTML = `
         <div class="max-w-4xl mx-auto pb-6">
+          <!-- Message Board -->
+          ${state.message ? `
+            <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-2xl md:rounded-3xl shadow-lg p-4 md:p-6 mb-4 md:mb-6 relative">
+              <button
+                onclick="window.deleteMessage()"
+                class="absolute top-3 right-3 w-8 h-8 rounded-full bg-amber-100 hover:bg-amber-200 active:bg-amber-300 text-amber-600 flex items-center justify-center transition-colors"
+              >
+                ${icons.x}
+              </button>
+              <div class="flex items-start gap-3 pr-8">
+                <div class="text-3xl md:text-4xl">📌</div>
+                <div class="flex-1">
+                  <div class="text-xs md:text-sm text-amber-600 font-semibold mb-1">BACHECA FAMIGLIA</div>
+                  <div class="text-base md:text-lg text-gray-800 font-medium">${state.message.text}</div>
+                  <div class="text-xs text-amber-600 mt-2">${new Date(state.message.timestamp).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+              </div>
+            </div>
+          ` : state.showMessageInput ? `
+            <div class="bg-white rounded-2xl md:rounded-3xl shadow-xl p-4 md:p-6 mb-4 md:mb-6">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="text-2xl">📌</div>
+                <div class="text-base md:text-lg font-semibold text-gray-700">Nuovo messaggio bacheca</div>
+              </div>
+              <textarea
+                id="messageInput"
+                placeholder="Scrivi un messaggio per la famiglia..."
+                class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-amber-400 focus:outline-none transition-colors text-base resize-none"
+                rows="3"
+              ></textarea>
+              <div class="flex gap-2 mt-3">
+                <button
+                  onclick="window.saveMessage()"
+                  class="flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-6 py-3 rounded-xl hover:shadow-lg active:scale-95 transition-all font-semibold"
+                >
+                  Pubblica
+                </button>
+                <button
+                  onclick="window.cancelMessage()"
+                  class="px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-700 font-semibold transition-colors"
+                >
+                  Annulla
+                </button>
+              </div>
+            </div>
+          ` : `
+            <button
+              onclick="window.showMessageForm()"
+              class="w-full bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-dashed border-amber-300 rounded-2xl md:rounded-3xl p-4 md:p-6 mb-4 md:mb-6 hover:border-amber-400 hover:shadow-lg active:scale-98 transition-all group"
+            >
+              <div class="flex items-center justify-center gap-3 text-amber-600">
+                <div class="text-3xl md:text-4xl">📌</div>
+                <div class="text-base md:text-lg font-semibold group-hover:text-amber-700">Aggiungi messaggio bacheca</div>
+              </div>
+            </button>
+          `}
+
           <!-- Header -->
           <div class="bg-white rounded-2xl md:rounded-3xl shadow-xl p-4 md:p-8 mb-4 md:mb-6">
             <div class="flex items-center justify-between mb-4">
@@ -427,6 +510,17 @@
       state.showFrequent = !state.showFrequent;
       render();
     };
+    window.showMessageForm = () => {
+      state.showMessageInput = true;
+      render();
+      setTimeout(() => document.getElementById('messageInput')?.focus(), 100);
+    };
+    window.cancelMessage = () => {
+      state.showMessageInput = false;
+      render();
+    };
+    window.saveMessage = saveMessage;
+    window.deleteMessage = deleteMessage;
 
     // Render iniziale
     render();
