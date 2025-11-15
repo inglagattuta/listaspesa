@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista della Spesa Famiglia</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .slide-in { animation: slideIn 0.3s ease-out; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 min-h-screen">
+  <div id="app" class="p-4"></div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getDatabase, ref, onValue, set, push, remove, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+    // Configurazione Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBmWi-5wQ97PA4TanAC5mHFAqmsNR9aUpE",
+      authDomain: "lista-spesa-famiglia-95127.firebaseapp.com",
+      databaseURL: "https://lista-spesa-famiglia-95127-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "lista-spesa-famiglia-95127",
+      storageBucket: "lista-spesa-famiglia-95127.firebasestorage.app",
+      messagingSenderId: "131762886904",
+      appId: "1:131762886904:web:068e00b3e2e08235e9c30d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Icone SVG
+    const icons = {
+      cart: '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
+      plus: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>',
+      check: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+      x: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+      trash: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>',
+      users: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>',
+      history: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+      star: '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>'
+    };
+
+    // Funzione per ottenere icona prodotto
+    function getProductIcon(name) {
+      const n = name.toLowerCase();
+      if (n.includes('mela') || n.includes('mele')) return '🍎';
+      if (n.includes('banana') || n.includes('banane')) return '🍌';
+      if (n.includes('arancia') || n.includes('arance')) return '🍊';
+      if (n.includes('limone') || n.includes('limoni')) return '🍋';
+      if (n.includes('fragola') || n.includes('fragole')) return '🍓';
+      if (n.includes('pesca') || n.includes('pesche')) return '🍑';
+      if (n.includes('uva')) return '🍇';
+      if (n.includes('anguria') || n.includes('cocomero')) return '🍉';
+      if (n.includes('ciliegia') || n.includes('ciliegie')) return '🍒';
+      if (n.includes('ananas')) return '🍍';
+      if (n.includes('kiwi')) return '🥝';
+      if (n.includes('pera') || n.includes('pere')) return '🍐';
+      if (n.includes('pomodor')) return '🍅';
+      if (n.includes('carota') || n.includes('carote')) return '🥕';
+      if (n.includes('melanzana') || n.includes('melanzane')) return '🍆';
+      if (n.includes('peperone') || n.includes('peperoni')) return '🫑';
+      if (n.includes('insalata') || n.includes('lattuga')) return '🥬';
+      if (n.includes('broccoli')) return '🥦';
+      if (n.includes('cipolla') || n.includes('cipolle')) return '🧅';
+      if (n.includes('aglio')) return '🧄';
+      if (n.includes('patata') || n.includes('patate')) return '🥔';
+      if (n.includes('zucchina') || n.includes('zucchine')) return '🥒';
+      if (n.includes('spinaci')) return '🥬';
+      if (n.includes('funghi')) return '🍄';
+      if (n.includes('pollo') || n.includes('tacchino')) return '🍗';
+      if (n.includes('carne') || n.includes('bistecca') || n.includes('manzo')) return '🥩';
+      if (n.includes('prosciutto') || n.includes('salame') || n.includes('salumi')) return '🥓';
+      if (n.includes('pesce') || n.includes('salmone') || n.includes('tonno')) return '🐟';
+      if (n.includes('gamber')) return '🦐';
+      if (n.includes('sushi')) return '🍣';
+      if (n.includes('latte')) return '🥛';
+      if (n.includes('formaggio') || n.includes('parmigiano') || n.includes('mozzarella')) return '🧀';
+      if (n.includes('burro')) return '🧈';
+      if (n.includes('yogurt')) return '🥛';
+      if (n.includes('uova') || n.includes('uovo')) return '🥚';
+      if (n.includes('pane')) return '🍞';
+      if (n.includes('pasta')) return '🍝';
+      if (n.includes('pizza')) return '🍕';
+      if (n.includes('riso')) return '🍚';
+      if (n.includes('cereali')) return '🥣';
+      if (n.includes('biscotti') || n.includes('biscotto')) return '🍪';
+      if (n.includes('crackers')) return '🍘';
+      if (n.includes('farina')) return '🌾';
+      if (n.includes('cioccolat')) return '🍫';
+      if (n.includes('gelato')) return '🍦';
+      if (n.includes('torta')) return '🍰';
+      if (n.includes('caramelle')) return '🍬';
+      if (n.includes('miele')) return '🍯';
+      if (n.includes('acqua')) return '💧';
+      if (n.includes('caffè') || n.includes('caffe')) return '☕';
+      if (n.includes('tè') || n.includes('te')) return '🍵';
+      if (n.includes('succo')) return '🧃';
+      if (n.includes('birra')) return '🍺';
+      if (n.includes('vino')) return '🍷';
+      if (n.includes('coca') || n.includes('cola') || n.includes('sprite')) return '🥤';
+      if (n.includes('olio')) return '🫗';
+      if (n.includes('sale')) return '🧂';
+      if (n.includes('zucchero')) return '🍬';
+      if (n.includes('aceto')) return '🫗';
+      if (n.includes('salsa') || n.includes('ketchup') || n.includes('maionese')) return '🥫';
+      if (n.includes('carta igienica') || n.includes('scottex')) return '🧻';
+      if (n.includes('sapone') || n.includes('shampoo') || n.includes('bagnoschiuma')) return '🧴';
+      if (n.includes('detersivo')) return '🧼';
+      if (n.includes('dentifricio')) return '🪥';
+      return '🛒';
+    }
+
+    function getProductColor(emoji) {
+      const colorMap = {
+        '🍎': 'from-red-400 to-rose-500', '🍌': 'from-yellow-400 to-amber-500',
+        '🍊': 'from-orange-400 to-orange-500', '🍋': 'from-yellow-300 to-yellow-400',
+        '🍓': 'from-red-400 to-pink-500', '🍅': 'from-red-500 to-rose-600',
+        '🥕': 'from-orange-500 to-amber-600', '🥬': 'from-green-400 to-emerald-500',
+        '🥦': 'from-green-500 to-emerald-600', '🍗': 'from-amber-500 to-orange-600',
+        '🥩': 'from-red-600 to-rose-700', '🐟': 'from-blue-400 to-cyan-500',
+        '🥛': 'from-blue-300 to-cyan-400', '🧀': 'from-yellow-500 to-amber-600',
+        '🍞': 'from-amber-400 to-orange-500', '🍝': 'from-yellow-400 to-orange-400',
+        '☕': 'from-amber-700 to-orange-800', '🍫': 'from-amber-800 to-orange-900',
+        '💧': 'from-blue-400 to-cyan-500', '🧻': 'from-gray-300 to-gray-400',
+        '🧴': 'from-purple-400 to-pink-400'
+      };
+      return colorMap[emoji] || 'from-purple-400 to-pink-500';
+    }
+
+    // Stato dell'app
+    let state = {
+      items: [],
+      frequentItems: [],
+      showFrequent: true,
+      newItem: ''
+    };
+
+    // Riferimenti Firebase
+    const itemsRef = ref(db, 'shoppingList');
+    const frequentRef = ref(db, 'frequentItems');
+
+    // Ascolta cambiamenti Firebase
+    onValue(itemsRef, (snapshot) => {
+      const data = snapshot.val();
+      state.items = data ? Object.keys(data).map(key => ({id: key, ...data[key]})) : [];
+      render();
+    });
+
+    onValue(frequentRef, (snapshot) => {
+      const data = snapshot.val();
+      state.frequentItems = data ? Object.keys(data).map(key => ({id: key, ...data[key]})) : [];
+      render();
+    });
+
+    // Funzioni
+    async function addItem() {
+      const name = state.newItem.trim();
+      if (!name) return;
+
+      const icon = getProductIcon(name);
+      const newItemRef = push(itemsRef);
+      await set(newItemRef, {
+        name,
+        icon,
+        checked: false,
+        addedAt: new Date().toISOString()
+      });
+
+      // Aggiungi ai frequenti se non esiste
+      const exists = state.frequentItems.find(f => f.name.toLowerCase() === name.toLowerCase());
+      if (!exists) {
+        const newFreqRef = push(frequentRef);
+        await set(newFreqRef, {
+          name,
+          icon,
+          usageCount: 1,
+          lastUsed: new Date().toISOString()
+        });
+      }
+
+      state.newItem = '';
+      document.getElementById('newItemInput').value = '';
+    }
+
+    async function addFromFrequent(freq) {
+      const exists = state.items.find(i => i.name.toLowerCase() === freq.name.toLowerCase() && !i.checked);
+      if (exists) return;
+
+      const newItemRef = push(itemsRef);
+      await set(newItemRef, {
+        name: freq.name,
+        icon: freq.icon,
+        checked: false,
+        addedAt: new Date().toISOString()
+      });
+
+      // Incrementa contatore
+      const freqRef = ref(db, `frequentItems/${freq.id}`);
+      await update(freqRef, {
+        usageCount: freq.usageCount + 1,
+        lastUsed: new Date().toISOString()
+      });
+    }
+
+    async function toggleItem(id) {
+      const item = state.items.find(i => i.id === id);
+      const itemRef = ref(db, `shoppingList/${id}`);
+      await update(itemRef, { checked: !item.checked });
+    }
+
+    async function deleteItem(id) {
+      await remove(ref(db, `shoppingList/${id}`));
+    }
+
+    async function removeFromFrequent(id) {
+      await remove(ref(db, `frequentItems/${id}`));
+    }
+
+    async function clearCompleted() {
+      const completed = state.items.filter(i => i.checked);
+      for (const item of completed) {
+        await remove(ref(db, `shoppingList/${item.id}`));
+      }
+    }
+
+    // Render
+    function render() {
+      const uncheckedCount = state.items.filter(i => !i.checked).length;
+      const checkedCount = state.items.filter(i => i.checked).length;
+      const sortedFrequent = [...state.frequentItems].sort((a, b) => b.usageCount - a.usageCount);
+
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="max-w-4xl mx-auto">
+          <!-- Header -->
+          <div class="bg-white rounded-3xl shadow-2xl p-8 mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-br from-purple-500 to-pink-500 p-3 rounded-2xl text-white">
+                  ${icons.cart}
+                </div>
+                <div>
+                  <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    Lista della Spesa
+                  </h1>
+                  <p class="text-gray-500 flex items-center gap-2">
+                    ${icons.users}
+                    Condivisa con la famiglia
+                  </p>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-3xl font-bold text-purple-600">${uncheckedCount}</div>
+                <div class="text-sm text-gray-500">da comprare</div>
+              </div>
+            </div>
+
+            <div class="flex gap-3 mb-4">
+              <input
+                type="text"
+                id="newItemInput"
+                placeholder="Aggiungi prodotto (es. mele, pane, latte)..."
+                class="flex-1 px-6 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none transition-colors text-lg"
+              />
+              <button
+                onclick="window.addItem()"
+                class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-xl hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 font-semibold"
+              >
+                ${icons.plus}
+                Aggiungi
+              </button>
+            </div>
+
+            ${checkedCount > 0 ? `
+              <button
+                onclick="window.clearCompleted()"
+                class="text-sm text-gray-500 hover:text-red-500 transition-colors flex items-center gap-1"
+              >
+                ${icons.trash}
+                Rimuovi completati (${checkedCount})
+              </button>
+            ` : ''}
+          </div>
+
+          <!-- Frequent Items -->
+          ${state.frequentItems.length > 0 ? `
+            <div class="bg-white rounded-3xl shadow-2xl p-6 mb-6">
+              <button
+                onclick="window.toggleFrequent()"
+                class="flex items-center gap-2 text-lg font-semibold text-gray-700 mb-4 hover:text-purple-600 transition-colors w-full"
+              >
+                ${icons.history}
+                Prodotti Frequenti (${state.frequentItems.length})
+                <span class="ml-auto text-2xl">${state.showFrequent ? '▼' : '▶'}</span>
+              </button>
+
+              ${state.showFrequent ? `
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  ${sortedFrequent.map(freq => {
+                    const isInList = state.items.some(i => i.name.toLowerCase() === freq.name.toLowerCase() && !i.checked);
+                    return `
+                      <div
+                        class="relative group rounded-xl p-4 border-2 transition-all ${isInList ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer'}"
+                        onclick="${!isInList ? `window.addFromFrequent('${freq.id}')` : ''}"
+                      >
+                        <button
+                          onclick="event.stopPropagation(); window.removeFromFrequent('${freq.id}')"
+                          class="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 text-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        >
+                          ${icons.x}
+                        </button>
+                        
+                        <div class="flex flex-col items-center gap-2">
+                          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br ${getProductColor(freq.icon)} flex items-center justify-center text-3xl shadow-lg">
+                            ${freq.icon}
+                          </div>
+                          <div class="text-center w-full">
+                            <div class="font-medium text-sm truncate">${freq.name}</div>
+                            <div class="flex items-center justify-center gap-1 text-xs text-gray-400 mt-1">
+                              <span class="text-yellow-400">${icons.star}</span>
+                              ${freq.usageCount}x
+                            </div>
+                          </div>
+                        </div>
+                        
+                        ${isInList ? `
+                          <div class="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-20 rounded-xl">
+                            <span class="text-green-600">${icons.check}</span>
+                          </div>
+                        ` : ''}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              ` : ''}
+            </div>
+          ` : ''}
+
+          <!-- Items List -->
+          <div class="space-y-3">
+            ${state.items.length === 0 ? `
+              <div class="bg-white rounded-3xl shadow-lg p-12 text-center">
+                <div class="text-6xl mb-4">🛒</div>
+                <p class="text-gray-400 text-lg">La lista è vuota, aggiungi il primo prodotto!</p>
+                ${state.frequentItems.length > 0 ? '<p class="text-gray-400 text-sm mt-2">💡 Usa i prodotti frequenti qui sopra</p>' : ''}
+              </div>
+            ` : state.items.map(item => `
+              <div class="bg-white rounded-2xl shadow-lg p-5 slide-in ${item.checked ? 'opacity-60' : ''}">
+                <div class="flex items-center gap-4">
+                  <button
+                    onclick="window.toggleItem('${item.id}')"
+                    class="flex-shrink-0 w-8 h-8 rounded-xl border-3 flex items-center justify-center transition-all ${item.checked ? 'bg-gradient-to-br from-green-400 to-emerald-500 border-green-500 text-white' : 'border-gray-300 hover:border-purple-400'}"
+                  >
+                    ${item.checked ? icons.check : ''}
+                  </button>
+
+                  <div class="w-14 h-14 rounded-xl bg-gradient-to-br ${getProductColor(item.icon)} flex items-center justify-center text-3xl flex-shrink-0 shadow-md">
+                    ${item.icon}
+                  </div>
+
+                  <div class="flex-1">
+                    <div class="font-semibold text-xl ${item.checked ? 'line-through text-gray-400' : 'text-gray-800'}">
+                      ${item.name}
+                    </div>
+                  </div>
+
+                  <button
+                    onclick="window.deleteItem('${item.id}')"
+                    class="flex-shrink-0 w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center transition-colors"
+                  >
+                    ${icons.x}
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="mt-8 text-center text-gray-400 text-sm">
+            💡 Le icone vengono assegnate automaticamente • Sincronizzato in tempo reale con Firebase
+          </div>
+        </div>
+      `;
+
+      // Event listener per input
+      const input = document.getElementById('newItemInput');
+      if (input) {
+        input.value = state.newItem;
+        input.addEventListener('input', (e) => {
+          state.newItem = e.target.value;
+        });
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') addItem();
+        });
+      }
+    }
+
+    // Funzioni globali
+    window.addItem = addItem;
+    window.toggleItem = toggleItem;
+    window.deleteItem = deleteItem;
+    window.addFromFrequent = (id) => {
+      const freq = state.frequentItems.find(f => f.id === id);
+      if (freq) addFromFrequent(freq);
+    };
+    window.removeFromFrequent = removeFromFrequent;
+    window.clearCompleted = clearCompleted;
+    window.toggleFrequent = () => {
+      state.showFrequent = !state.showFrequent;
+      render();
+    };
+
+    // Render iniziale
+    render();
+  </script>
+</body>
+</html>
