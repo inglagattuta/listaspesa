@@ -198,21 +198,50 @@
     }
 
     async function toggleItem(id) {
+      console.log('toggleItem chiamato per id:', id);
       const item = state.items.find(i => i.id === id);
+      console.log('Item trovato:', item);
+      
+      if (!item) {
+        console.error('Item non trovato!');
+        return;
+      }
+      
       const itemRef = ref(db, 'shoppingList/' + id);
       
       if (!item.checked) {
-        const statsItemRef = ref(db, 'purchaseStats/' + item.name.toLowerCase());
-        const currentStat = state.stats[item.name.toLowerCase()] || { name: item.name, count: 0, icon: item.icon };
-        await set(statsItemRef, {
+        console.log('Marcando come acquistato, salvando statistica...');
+        const statsKey = item.name.toLowerCase().replace(/\s+/g, '_');
+        const statsItemRef = ref(db, 'purchaseStats/' + statsKey);
+        const currentStat = state.stats[statsKey] || { name: item.name, count: 0, icon: item.icon };
+        
+        console.log('Salvando in purchaseStats/' + statsKey);
+        console.log('Dati da salvare:', {
           name: item.name,
           icon: item.icon,
           count: currentStat.count + 1,
           lastPurchase: new Date().toISOString()
         });
+        
+        try {
+          await set(statsItemRef, {
+            name: item.name,
+            icon: item.icon,
+            count: currentStat.count + 1,
+            lastPurchase: new Date().toISOString()
+          });
+          console.log('Statistica salvata con successo!');
+        } catch (error) {
+          console.error('Errore nel salvare la statistica:', error);
+        }
       }
       
-      await update(itemRef, { checked: !item.checked });
+      try {
+        await update(itemRef, { checked: !item.checked });
+        console.log('Item aggiornato con successo');
+      } catch (error) {
+        console.error('Errore nell\'aggiornare item:', error);
+      }
     }
 
     async function deleteItem(id) {
