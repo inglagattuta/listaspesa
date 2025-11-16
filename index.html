@@ -40,28 +40,40 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const icons = {
-      cart: '<svg class="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
-      plus: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>',
-      check: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
-      x: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
-      trash: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>',
-      users: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>',
-      history: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
-      star: '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>'
-    };
-
     function getProductIcon(name) {
       const n = name.toLowerCase();
       if (n.includes('mela') || n.includes('mele')) return '🍎';
       if (n.includes('banana') || n.includes('banane')) return '🍌';
       if (n.includes('arancia') || n.includes('arance')) return '🍊';
-      if (n.includes('pane')) return '🍞';
-      if (n.includes('latte')) return '🥛';
-      if (n.includes('pasta')) return '🍝';
+      if (n.includes('limone') || n.includes('limoni')) return '🍋';
+      if (n.includes('fragola') || n.includes('fragole')) return '🍓';
+      if (n.includes('pesca') || n.includes('pesche')) return '🍑';
+      if (n.includes('uva')) return '🍇';
       if (n.includes('pomodor')) return '🍅';
+      if (n.includes('carota') || n.includes('carote')) return '🥕';
+      if (n.includes('insalata') || n.includes('lattuga')) return '🥬';
+      if (n.includes('broccoli')) return '🥦';
+      if (n.includes('cipolla') || n.includes('cipolle')) return '🧅';
+      if (n.includes('patata') || n.includes('patate')) return '🥔';
+      if (n.includes('pollo') || n.includes('tacchino')) return '🍗';
+      if (n.includes('carne') || n.includes('bistecca')) return '🥩';
+      if (n.includes('pesce') || n.includes('salmone')) return '🐟';
+      if (n.includes('latte')) return '🥛';
       if (n.includes('formaggio')) return '🧀';
-      if (n.includes('uova')) return '🥚';
+      if (n.includes('uova') || n.includes('uovo')) return '🥚';
+      if (n.includes('pane')) return '🍞';
+      if (n.includes('pasta')) return '🍝';
+      if (n.includes('pizza')) return '🍕';
+      if (n.includes('riso')) return '🍚';
+      if (n.includes('biscotti')) return '🍪';
+      if (n.includes('cioccolat')) return '🍫';
+      if (n.includes('acqua')) return '💧';
+      if (n.includes('caffè') || n.includes('caffe')) return '☕';
+      if (n.includes('birra')) return '🍺';
+      if (n.includes('vino')) return '🍷';
+      if (n.includes('carta igienica') || n.includes('scottex')) return '🧻';
+      if (n.includes('sapone') || n.includes('shampoo')) return '🧴';
+      if (n.includes('detersivo')) return '🧼';
       return '🛒';
     }
 
@@ -70,12 +82,22 @@
         '🍎': 'from-red-400 to-rose-500',
         '🍌': 'from-yellow-400 to-amber-500',
         '🍊': 'from-orange-400 to-orange-500',
-        '🍞': 'from-amber-400 to-orange-500',
-        '🥛': 'from-blue-300 to-cyan-400',
-        '🍝': 'from-yellow-400 to-orange-400',
         '🍅': 'from-red-500 to-rose-600',
+        '🥕': 'from-orange-500 to-amber-600',
+        '🥬': 'from-green-400 to-emerald-500',
+        '🥦': 'from-green-500 to-emerald-600',
+        '🍗': 'from-amber-500 to-orange-600',
+        '🥩': 'from-red-600 to-rose-700',
+        '🐟': 'from-blue-400 to-cyan-500',
+        '🥛': 'from-blue-300 to-cyan-400',
         '🧀': 'from-yellow-500 to-amber-600',
-        '🥚': 'from-yellow-300 to-amber-400'
+        '🍞': 'from-amber-400 to-orange-500',
+        '🍝': 'from-yellow-400 to-orange-400',
+        '☕': 'from-amber-700 to-orange-800',
+        '🍫': 'from-amber-800 to-orange-900',
+        '💧': 'from-blue-400 to-cyan-500',
+        '🧻': 'from-gray-300 to-gray-400',
+        '🧴': 'from-purple-400 to-pink-400'
       };
       return colorMap[emoji] || 'from-purple-400 to-pink-500';
     }
@@ -88,12 +110,15 @@
       message: null,
       showMessageInput: false,
       imagePreview: null,
-      imageData: null
+      imageData: null,
+      showStats: false,
+      stats: {}
     };
 
     const itemsRef = ref(db, 'shoppingList');
     const frequentRef = ref(db, 'frequentItems');
     const messageRef = ref(db, 'familyMessage');
+    const statsRef = ref(db, 'purchaseStats');
 
     onValue(itemsRef, (snapshot) => {
       const data = snapshot.val();
@@ -112,6 +137,11 @@
       render();
     });
 
+    onValue(statsRef, (snapshot) => {
+      state.stats = snapshot.val() || {};
+      render();
+    });
+
     async function addItem() {
       const name = state.newItem.trim();
       if (!name) return;
@@ -119,8 +149,8 @@
       const icon = getProductIcon(name);
       const newItemRef = push(itemsRef);
       await set(newItemRef, {
-        name,
-        icon,
+        name: name,
+        icon: icon,
         checked: false,
         addedAt: new Date().toISOString(),
         image: state.imageData || null
@@ -130,8 +160,8 @@
       if (!exists) {
         const newFreqRef = push(frequentRef);
         await set(newFreqRef, {
-          name,
-          icon,
+          name: name,
+          icon: icon,
           usageCount: 1,
           lastUsed: new Date().toISOString()
         });
@@ -144,7 +174,6 @@
       const imageInput = document.getElementById('imageInput');
       if (input) input.value = '';
       if (imageInput) imageInput.value = '';
-      if (input) input.focus();
       render();
     }
 
@@ -161,7 +190,7 @@
         image: null
       });
 
-      const freqRef = ref(db, `frequentItems/${freq.id}`);
+      const freqRef = ref(db, 'frequentItems/' + freq.id);
       await update(freqRef, {
         usageCount: freq.usageCount + 1,
         lastUsed: new Date().toISOString()
@@ -170,28 +199,40 @@
 
     async function toggleItem(id) {
       const item = state.items.find(i => i.id === id);
-      const itemRef = ref(db, `shoppingList/${id}`);
+      const itemRef = ref(db, 'shoppingList/' + id);
+      
+      if (!item.checked) {
+        const statsItemRef = ref(db, 'purchaseStats/' + item.name.toLowerCase());
+        const currentStat = state.stats[item.name.toLowerCase()] || { name: item.name, count: 0, icon: item.icon };
+        await set(statsItemRef, {
+          name: item.name,
+          icon: item.icon,
+          count: currentStat.count + 1,
+          lastPurchase: new Date().toISOString()
+        });
+      }
+      
       await update(itemRef, { checked: !item.checked });
     }
 
     async function deleteItem(id) {
-      await remove(ref(db, `shoppingList/${id}`));
+      await remove(ref(db, 'shoppingList/' + id));
     }
 
     async function removeFromFrequent(id) {
-      await remove(ref(db, `frequentItems/${id}`));
+      await remove(ref(db, 'frequentItems/' + id));
     }
 
     async function clearCompleted() {
       const completed = state.items.filter(i => i.checked);
       for (const item of completed) {
-        await remove(ref(db, `shoppingList/${item.id}`));
+        await remove(ref(db, 'shoppingList/' + item.id));
       }
     }
 
     async function saveMessage() {
       const input = document.getElementById('messageInput');
-      const messageText = input?.value?.trim();
+      const messageText = input ? input.value.trim() : '';
       if (!messageText) {
         alert('Scrivi un messaggio prima di pubblicare!');
         return;
@@ -207,161 +248,241 @@
         render();
       } catch (error) {
         console.error('Errore:', error);
-        alert('Errore nel pubblicare il messaggio. Riprova!');
+        alert('Errore nel pubblicare il messaggio');
       }
     }
 
     async function deleteMessage() {
       await remove(messageRef);
-      state.showMessageInput = false;
     }
+
+    // Definisco le funzioni globali PRIMA del render
+    window.addItem = addItem;
+    window.toggleItem = toggleItem;
+    window.deleteItem = deleteItem;
+    window.addFromFrequent = function(id) {
+      const freq = state.frequentItems.find(f => f.id === id);
+      if (freq) addFromFrequent(freq);
+    };
+    window.removeFromFrequent = removeFromFrequent;
+    window.clearCompleted = clearCompleted;
+    window.toggleFrequent = function() {
+      state.showFrequent = !state.showFrequent;
+      render();
+    };
+    window.showMessageForm = function() {
+      state.showMessageInput = true;
+      render();
+      setTimeout(() => {
+        const input = document.getElementById('messageInput');
+        if (input) input.focus();
+      }, 100);
+    };
+    window.cancelMessage = function() {
+      state.showMessageInput = false;
+      render();
+    };
+    window.saveMessage = saveMessage;
+    window.deleteMessage = deleteMessage;
+    window.removeImage = function() {
+      state.imagePreview = null;
+      state.imageData = null;
+      const imageInput = document.getElementById('imageInput');
+      if (imageInput) imageInput.value = '';
+      render();
+    };
+    window.toggleStats = function() {
+      state.showStats = !state.showStats;
+      render();
+    };
 
     function render() {
       const uncheckedCount = state.items.filter(i => !i.checked).length;
       const checkedCount = state.items.filter(i => i.checked).length;
-      const sortedFrequent = [...state.frequentItems].sort((a, b) => b.usageCount - a.usageCount);
+      const sortedFrequent = state.frequentItems.slice().sort((a, b) => b.usageCount - a.usageCount);
 
-      const app = document.getElementById('app');
-      app.innerHTML = `
-        <div class="max-w-4xl mx-auto pb-6">
-          ${state.message ? `
-            <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-2xl md:rounded-3xl shadow-lg p-4 md:p-6 mb-4 md:mb-6 relative">
-              <button onclick="window.deleteMessage()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-amber-100 hover:bg-amber-200 active:bg-amber-300 text-amber-600 flex items-center justify-center transition-colors">
-                ${icons.x}
-              </button>
-              <div class="flex items-start gap-3 pr-8">
-                <div class="text-3xl md:text-4xl">📌</div>
-                <div class="flex-1">
-                  <div class="text-xs md:text-sm text-amber-600 font-semibold mb-1">BACHECA FAMIGLIA</div>
-                  <div class="text-base md:text-lg text-gray-800 font-medium">${state.message.text}</div>
-                  <div class="text-xs text-amber-600 mt-2">${new Date(state.message.timestamp).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
-                </div>
-              </div>
-            </div>
-          ` : state.showMessageInput ? `
-            <div class="bg-white rounded-2xl md:rounded-3xl shadow-xl p-4 md:p-6 mb-4 md:mb-6">
-              <div class="flex items-center gap-2 mb-3">
-                <div class="text-2xl">📌</div>
-                <div class="text-base md:text-lg font-semibold text-gray-700">Nuovo messaggio bacheca</div>
-              </div>
-              <textarea id="messageInput" placeholder="Scrivi un messaggio per la famiglia..." class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-amber-400 focus:outline-none transition-colors text-base resize-none" rows="3"></textarea>
-              <div class="flex gap-2 mt-3">
-                <button onclick="event.preventDefault(); window.saveMessage();" class="flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-6 py-3 rounded-xl hover:shadow-lg active:scale-95 transition-all font-semibold">Pubblica</button>
-                <button onclick="event.preventDefault(); window.cancelMessage();" class="px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-700 font-semibold transition-colors">Annulla</button>
-              </div>
-            </div>
-          ` : `
-            <button onclick="window.showMessageForm()" class="w-full bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-dashed border-amber-300 rounded-2xl md:rounded-3xl p-4 md:p-6 mb-4 md:mb-6 hover:border-amber-400 hover:shadow-lg active:scale-98 transition-all group">
-              <div class="flex items-center justify-center gap-3 text-amber-600">
-                <div class="text-3xl md:text-4xl">📌</div>
-                <div class="text-base md:text-lg font-semibold group-hover:text-amber-700">Aggiungi messaggio bacheca</div>
-              </div>
-            </button>
-          `}
+      let html = '<div class="max-w-4xl mx-auto pb-6">';
 
-          <div class="bg-white rounded-2xl md:rounded-3xl shadow-xl p-4 md:p-8 mb-4 md:mb-6">
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-2 md:gap-3">
-                <div class="bg-gradient-to-br from-purple-500 to-pink-500 p-2 md:p-3 rounded-xl md:rounded-2xl text-white">${icons.cart}</div>
-                <div>
-                  <h1 class="text-xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Lista Spesa</h1>
-                  <p class="text-xs md:text-sm text-gray-500 flex items-center gap-1 md:gap-2">${icons.users} Famiglia</p>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-2xl md:text-3xl font-bold text-purple-600">${uncheckedCount}</div>
-                <div class="text-xs md:text-sm text-gray-500">da comprare</div>
-              </div>
-            </div>
+      // Statistiche
+      if (state.showStats) {
+        html += '<div class="bg-white rounded-2xl md:rounded-3xl shadow-xl p-4 md:p-6 mb-4 md:mb-6">';
+        html += '<div class="flex items-center justify-between mb-4">';
+        html += '<div class="flex items-center gap-2"><div class="text-2xl md:text-3xl">📊</div>';
+        html += '<h2 class="text-xl md:text-2xl font-bold text-gray-800">Statistiche Acquisti</h2></div>';
+        html += '<button onclick="window.toggleStats()" class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center">✕</button>';
+        html += '</div>';
 
-            <div class="flex flex-col gap-3 mb-3">
-              <div class="flex flex-col md:flex-row gap-3">
-                <input type="text" id="newItemInput" placeholder="Es: mele, pane, latte..." class="flex-1 px-4 md:px-6 py-4 md:py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none transition-colors text-base md:text-lg" />
-                <button onclick="window.addItem()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 md:px-8 py-4 md:py-3 rounded-xl hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 font-semibold text-base md:text-base">${icons.plus} Aggiungi</button>
-              </div>
-              
-              <div class="flex items-center gap-3">
-                <input type="file" id="imageInput" accept="image/*" class="hidden" />
-                <label for="imageInput" class="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-gray-300 hover:border-purple-400 cursor-pointer transition-colors text-sm text-gray-600">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                  ${state.imagePreview ? 'Cambia immagine' : 'Aggiungi foto (opzionale)'}
-                </label>
-                ${state.imagePreview ? `<button onclick="window.removeImage()" class="px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 text-sm transition-colors">Rimuovi</button>` : ''}
-              </div>
-              
-              ${state.imagePreview ? `<div class="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-purple-200"><img src="${state.imagePreview}" alt="Anteprima" class="w-full h-full object-cover" /></div>` : ''}
-            </div>
+        const statsArray = Object.values(state.stats);
+        if (statsArray.length === 0) {
+          html += '<div class="text-center py-8"><div class="text-5xl mb-3">📈</div>';
+          html += '<p class="text-gray-400">Nessuna statistica ancora</p>';
+          html += '<p class="text-sm text-gray-400 mt-1">Inizia a completare gli acquisti!</p></div>';
+        } else {
+          const sortedStats = statsArray.sort((a, b) => b.count - a.count).slice(0, 10);
+          const maxCount = Math.max(...statsArray.map(s => s.count));
+          
+          html += '<div class="space-y-3">';
+          sortedStats.forEach((stat, index) => {
+            const percentage = (stat.count / maxCount) * 100;
+            html += '<div class="relative">';
+            html += '<div class="flex items-center gap-3 relative z-10">';
+            html += '<div class="w-12 h-12 rounded-xl bg-gradient-to-br ' + getProductColor(stat.icon) + ' flex items-center justify-center text-3xl shadow-md">' + stat.icon + '</div>';
+            html += '<div class="flex-1"><div class="font-semibold text-lg">' + stat.name + '</div>';
+            html += '<div class="text-sm text-gray-500">Acquistato ' + stat.count + ' ' + (stat.count === 1 ? 'volta' : 'volte') + '</div></div>';
+            html += '<div class="flex items-center gap-2"><div class="text-3xl font-bold text-purple-600">' + stat.count + '</div>';
+            if (index < 3) {
+              html += '<div class="text-2xl">' + (index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉') + '</div>';
+            }
+            html += '</div></div>';
+            html += '<div class="absolute left-0 top-0 h-full bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl" style="width: ' + percentage + '%; opacity: 0.3;"></div>';
+            html += '</div>';
+          });
+          html += '</div>';
 
-            ${checkedCount > 0 ? `<button onclick="window.clearCompleted()" class="text-sm md:text-base text-gray-500 hover:text-red-500 transition-colors flex items-center gap-2 py-2">${icons.trash} Rimuovi completati (${checkedCount})</button>` : ''}
-          </div>
+          const totalProducts = Object.keys(state.stats).length;
+          const totalPurchases = statsArray.reduce((sum, s) => sum + s.count, 0);
+          const maxPurchases = Math.max(...statsArray.map(s => s.count));
+          const avgPurchases = Math.round(totalPurchases / totalProducts) || 0;
 
-          <div class="space-y-3">
-            ${state.items.length === 0 ? `
-              <div class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-8 md:p-12 text-center">
-                <div class="text-5xl md:text-6xl mb-4">🛒</div>
-                <p class="text-gray-400 text-base md:text-lg">La lista è vuota!</p>
-                ${state.frequentItems.length > 0 ? '<p class="text-gray-400 text-sm mt-2">💡 Usa i prodotti frequenti</p>' : ''}
-              </div>
-            ` : state.items.map(item => `
-              <div class="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-5 slide-in active:scale-98 transition-transform ${item.checked ? 'opacity-60' : ''}">
-                <div class="flex items-center gap-3 md:gap-4">
-                  <button onclick="window.toggleItem('${item.id}')" class="flex-shrink-0 w-12 h-12 md:w-10 md:h-10 rounded-xl border-3 flex items-center justify-center transition-all active:scale-90 ${item.checked ? 'bg-gradient-to-br from-green-400 to-emerald-500 border-green-500 text-white' : 'border-gray-300 hover:border-purple-400'}">
-                    ${item.checked ? icons.check : ''}
-                  </button>
-                  ${item.image ? `
-                    <div class="w-16 h-16 md:w-14 md:h-14 rounded-xl overflow-hidden flex-shrink-0 shadow-md">
-                      <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" />
-                    </div>
-                  ` : `
-                    <div class="w-16 h-16 md:w-14 md:h-14 rounded-xl bg-gradient-to-br ${getProductColor(item.icon)} flex items-center justify-center text-4xl md:text-3xl flex-shrink-0 shadow-md">${item.icon}</div>
-                  `}
-                  <div class="flex-1 min-w-0">
-                    <div class="font-semibold text-lg md:text-xl ${item.checked ? 'line-through text-gray-400' : 'text-gray-800'} truncate">${item.name}</div>
-                  </div>
-                  <button onclick="window.deleteItem('${item.id}')" class="flex-shrink-0 w-12 h-12 md:w-10 md:h-10 rounded-xl bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-500 flex items-center justify-center transition-colors">${icons.x}</button>
-                </div>
-              </div>
-            `).join('')}
-          </div>
+          html += '<div class="mt-6 pt-6 border-t border-gray-200"><div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">';
+          html += '<div><div class="text-3xl font-bold text-purple-600">' + totalProducts + '</div><div class="text-sm text-gray-500">Prodotti diversi</div></div>';
+          html += '<div><div class="text-3xl font-bold text-pink-600">' + totalPurchases + '</div><div class="text-sm text-gray-500">Acquisti totali</div></div>';
+          html += '<div><div class="text-3xl font-bold text-amber-600">' + maxPurchases + '</div><div class="text-sm text-gray-500">Record acquisti</div></div>';
+          html += '<div><div class="text-3xl font-bold text-blue-600">' + avgPurchases + '</div><div class="text-sm text-gray-500">Media acquisti</div></div>';
+          html += '</div></div>';
+        }
+        html += '</div>';
+      }
 
-          <div class="mt-6 md:mt-8 text-center text-gray-400 text-xs md:text-sm px-4">💡 Sincronizzato in tempo reale</div>
+      // Bacheca
+      if (state.message) {
+        const msgDate = new Date(state.message.timestamp).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        html += '<div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-2xl shadow-lg p-4 md:p-6 mb-4 relative">';
+        html += '<button onclick="window.deleteMessage()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-600 flex items-center justify-center">✕</button>';
+        html += '<div class="flex items-start gap-3 pr-8"><div class="text-4xl">📌</div><div class="flex-1">';
+        html += '<div class="text-sm text-amber-600 font-semibold mb-1">BACHECA FAMIGLIA</div>';
+        html += '<div class="text-lg text-gray-800 font-medium">' + state.message.text + '</div>';
+        html += '<div class="text-xs text-amber-600 mt-2">' + msgDate + '</div>';
+        html += '</div></div></div>';
+      } else if (state.showMessageInput) {
+        html += '<div class="bg-white rounded-2xl shadow-xl p-4 md:p-6 mb-4">';
+        html += '<div class="flex items-center gap-2 mb-3"><div class="text-2xl">📌</div>';
+        html += '<div class="text-lg font-semibold text-gray-700">Nuovo messaggio bacheca</div></div>';
+        html += '<textarea id="messageInput" placeholder="Scrivi un messaggio..." class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-amber-400 focus:outline-none text-base resize-none" rows="3"></textarea>';
+        html += '<div class="flex gap-2 mt-3">';
+        html += '<button onclick="window.saveMessage()" class="flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-6 py-3 rounded-xl hover:shadow-lg font-semibold">Pubblica</button>';
+        html += '<button onclick="window.cancelMessage()" class="px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold">Annulla</button>';
+        html += '</div></div>';
+      } else {
+        html += '<button onclick="window.showMessageForm()" class="w-full bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-dashed border-amber-300 rounded-2xl p-4 md:p-6 mb-4 hover:border-amber-400 hover:shadow-lg">';
+        html += '<div class="flex items-center justify-center gap-3 text-amber-600"><div class="text-4xl">📌</div>';
+        html += '<div class="text-lg font-semibold">Aggiungi messaggio bacheca</div></div></button>';
+      }
 
-          ${state.frequentItems.length > 0 ? `
-            <div class="bg-white rounded-2xl md:rounded-3xl shadow-xl p-4 md:p-6 mt-4 md:mt-6">
-              <button onclick="window.toggleFrequent()" class="flex items-center gap-2 text-base md:text-lg font-semibold text-gray-700 mb-4 hover:text-purple-600 transition-colors w-full py-2">
-                ${icons.history} Prodotti Frequenti (${state.frequentItems.length})
-                <span class="ml-auto text-xl md:text-2xl">${state.showFrequent ? '▼' : '▶'}</span>
-              </button>
-              ${state.showFrequent ? `
-                <div class="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-3">
-                  ${sortedFrequent.map(freq => {
-                    const isInList = state.items.some(i => i.name.toLowerCase() === freq.name.toLowerCase() && !i.checked);
-                    return `
-                      <div class="relative group rounded-xl p-3 border-2 transition-all active:scale-95 ${isInList ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer'}" onclick="${!isInList ? `window.addFromFrequent('${freq.id}')` : ''}">
-                        <button onclick="event.stopPropagation(); window.removeFromFrequent('${freq.id}')" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 active:bg-red-300 text-red-500 flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
-                        <div class="flex flex-col items-center gap-1 md:gap-2">
-                          <div class="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br ${getProductColor(freq.icon)} flex items-center justify-center text-2xl md:text-3xl shadow-md">${freq.icon}</div>
-                          <div class="text-center w-full">
-                            <div class="font-medium text-xs md:text-sm truncate px-1">${freq.name}</div>
-                            <div class="flex items-center justify-center gap-1 text-xs text-gray-400">
-                              <span class="text-yellow-400">${icons.star}</span>
-                              ${freq.usageCount}x
-                            </div>
-                          </div>
-                        </div>
-                        ${isInList ? `<div class="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-20 rounded-xl"><svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div>` : ''}
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
-              ` : ''}
-            </div>
-          ` : ''}
-        </div>
-      `;
+      // Header lista
+      html += '<div class="bg-white rounded-2xl shadow-xl p-4 md:p-8 mb-4">';
+      html += '<div class="flex items-center justify-between mb-4">';
+      html += '<div class="flex items-center gap-3">';
+      html += '<div class="bg-gradient-to-br from-purple-500 to-pink-500 p-3 rounded-2xl text-white">🛒</div>';
+      html += '<div><h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Lista Spesa</h1>';
+      html += '<p class="text-sm text-gray-500">👥 Famiglia</p></div></div>';
+      html += '<div class="flex items-center gap-3">';
+      html += '<button onclick="window.toggleStats()" class="flex flex-col items-center px-3 py-2 rounded-xl bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200">';
+      html += '<div class="text-2xl">📊</div><div class="text-xs font-semibold text-purple-700 hidden md:block">Stats</div></button>';
+      html += '<div class="text-right"><div class="text-3xl font-bold text-purple-600">' + uncheckedCount + '</div>';
+      html += '<div class="text-sm text-gray-500">da comprare</div></div></div></div>';
 
+      // Form aggiungi
+      html += '<div class="flex flex-col gap-3 mb-3">';
+      html += '<div class="flex flex-col md:flex-row gap-3">';
+      html += '<input type="text" id="newItemInput" placeholder="Es: mele, pane, latte..." class="flex-1 px-6 py-4 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none text-lg" />';
+      html += '<button onclick="window.addItem()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-xl hover:shadow-lg font-semibold">➕ Aggiungi</button>';
+      html += '</div>';
+      
+      html += '<div class="flex items-center gap-3">';
+      html += '<input type="file" id="imageInput" accept="image/*" class="hidden" />';
+      html += '<label for="imageInput" class="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-gray-300 hover:border-purple-400 cursor-pointer text-sm text-gray-600">';
+      html += '📷 ' + (state.imagePreview ? 'Cambia foto' : 'Aggiungi foto');
+      html += '</label>';
+      if (state.imagePreview) {
+        html += '<button onclick="window.removeImage()" class="px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 text-sm">Rimuovi</button>';
+      }
+      html += '</div>';
+      
+      if (state.imagePreview) {
+        html += '<div class="w-24 h-24 rounded-xl overflow-hidden border-2 border-purple-200"><img src="' + state.imagePreview + '" alt="Anteprima" class="w-full h-full object-cover" /></div>';
+      }
+      html += '</div>';
+
+      if (checkedCount > 0) {
+        html += '<button onclick="window.clearCompleted()" class="text-sm text-gray-500 hover:text-red-500 flex items-center gap-2 py-2">🗑️ Rimuovi completati (' + checkedCount + ')</button>';
+      }
+      html += '</div>';
+
+      // Lista prodotti
+      html += '<div class="space-y-3">';
+      if (state.items.length === 0) {
+        html += '<div class="bg-white rounded-2xl shadow-lg p-12 text-center">';
+        html += '<div class="text-6xl mb-4">🛒</div><p class="text-gray-400 text-lg">La lista è vuota!</p>';
+        if (state.frequentItems.length > 0) {
+          html += '<p class="text-gray-400 text-sm mt-2">💡 Usa i prodotti frequenti</p>';
+        }
+        html += '</div>';
+      } else {
+        state.items.forEach(item => {
+          html += '<div class="bg-white rounded-xl shadow-lg p-5 slide-in ' + (item.checked ? 'opacity-60' : '') + '">';
+          html += '<div class="flex items-center gap-4">';
+          html += '<button onclick="window.toggleItem(\'' + item.id + '\')" class="w-12 h-12 rounded-xl border-3 flex items-center justify-center ' + (item.checked ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white' : 'border-gray-300') + '">';
+          if (item.checked) html += '✓';
+          html += '</button>';
+          
+          if (item.image) {
+            html += '<div class="w-16 h-16 rounded-xl overflow-hidden shadow-md"><img src="' + item.image + '" class="w-full h-full object-cover" /></div>';
+          } else {
+            html += '<div class="w-16 h-16 rounded-xl bg-gradient-to-br ' + getProductColor(item.icon) + ' flex items-center justify-center text-4xl shadow-md">' + item.icon + '</div>';
+          }
+          
+          html += '<div class="flex-1"><div class="font-semibold text-xl ' + (item.checked ? 'line-through text-gray-400' : 'text-gray-800') + '">' + item.name + '</div></div>';
+          html += '<button onclick="window.deleteItem(\'' + item.id + '\')" class="w-12 h-12 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center">✕</button>';
+          html += '</div></div>';
+        });
+      }
+      html += '</div>';
+
+      html += '<div class="mt-8 text-center text-gray-400 text-sm">💡 Sincronizzato in tempo reale</div>';
+
+      // Prodotti frequenti
+      if (state.frequentItems.length > 0) {
+        html += '<div class="bg-white rounded-2xl shadow-xl p-6 mt-6">';
+        html += '<button onclick="window.toggleFrequent()" class="flex items-center gap-2 text-lg font-semibold text-gray-700 mb-4 w-full">';
+        html += '🕒 Prodotti Frequenti (' + state.frequentItems.length + ')';
+        html += '<span class="ml-auto text-2xl">' + (state.showFrequent ? '▼' : '▶') + '</span></button>';
+        
+        if (state.showFrequent) {
+          html += '<div class="grid grid-cols-3 md:grid-cols-5 gap-3">';
+          sortedFrequent.forEach(freq => {
+            const isInList = state.items.some(i => i.name.toLowerCase() === freq.name.toLowerCase() && !i.checked);
+            html += '<div class="relative group rounded-xl p-3 border-2 ' + (isInList ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:border-purple-300 cursor-pointer') + '" onclick="' + (!isInList ? 'window.addFromFrequent(\'' + freq.id + '\')' : '') + '">';
+            html += '<button onclick="event.stopPropagation(); window.removeFromFrequent(\'' + freq.id + '\')" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 text-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100">✕</button>';
+            html += '<div class="flex flex-col items-center gap-2">';
+            html += '<div class="w-14 h-14 rounded-xl bg-gradient-to-br ' + getProductColor(freq.icon) + ' flex items-center justify-center text-3xl shadow-md">' + freq.icon + '</div>';
+            html += '<div class="text-center w-full"><div class="font-medium text-sm truncate">' + freq.name + '</div>';
+            html += '<div class="text-xs text-gray-400">⭐ ' + freq.usageCount + 'x</div></div></div>';
+            if (isInList) {
+              html += '<div class="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-20 rounded-xl"><span class="text-4xl">✓</span></div>';
+            }
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+
+      html += '</div>';
+
+      document.getElementById('app').innerHTML = html;
+
+      // Event listeners
       const input = document.getElementById('newItemInput');
       if (input) {
         input.value = state.newItem;
@@ -389,38 +510,6 @@
         });
       }
     }
-
-    window.addItem = addItem;
-    window.toggleItem = toggleItem;
-    window.deleteItem = deleteItem;
-    window.addFromFrequent = (id) => {
-      const freq = state.frequentItems.find(f => f.id === id);
-      if (freq) addFromFrequent(freq);
-    };
-    window.removeFromFrequent = removeFromFrequent;
-    window.clearCompleted = clearCompleted;
-    window.toggleFrequent = () => {
-      state.showFrequent = !state.showFrequent;
-      render();
-    };
-    window.showMessageForm = () => {
-      state.showMessageInput = true;
-      render();
-      setTimeout(() => document.getElementById('messageInput')?.focus(), 100);
-    };
-    window.cancelMessage = () => {
-      state.showMessageInput = false;
-      render();
-    };
-    window.saveMessage = saveMessage;
-    window.deleteMessage = deleteMessage;
-    window.removeImage = () => {
-      state.imagePreview = null;
-      state.imageData = null;
-      const imageInput = document.getElementById('imageInput');
-      if (imageInput) imageInput.value = '';
-      render();
-    };
 
     render();
   </script>
