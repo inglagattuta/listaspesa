@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Lista della Spesa</title>
+  <title>Lista della Spesa - Famiglia</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @keyframes slideIn {
@@ -146,9 +146,7 @@
         const newCheckedState = !item.checked;
         await update(itemRef, { checked: newCheckedState });
         
-        // Se il prodotto viene spuntato (acquistato), aggiorna le statistiche
         if (newCheckedState) {
-          console.log('Aggiornamento statistiche per:', item.name);
           await updateStatistics(item.name, item.icon);
         }
       }
@@ -215,24 +213,17 @@
     }
 
     async function updateStatistics(productName, productIcon) {
-      console.log('updateStatistics chiamata con:', productName, productIcon);
       const normalizedName = productName.toLowerCase();
       const existingStat = state.statistics.find(s => s.name.toLowerCase() === normalizedName);
       
-      console.log('Statistica esistente:', existingStat);
-      
       if (existingStat) {
-        // Incrementa il contatore
         const statRef = ref(db, `statistics/${existingStat.id}`);
         const newCount = (existingStat.count || 0) + 1;
-        console.log('Incremento contatore a:', newCount);
         await update(statRef, {
           count: newCount,
           lastPurchase: new Date().toISOString()
         });
       } else {
-        // Crea nuova statistica
-        console.log('Creazione nuova statistica');
         const newStatRef = push(statisticsRef);
         await set(newStatRef, {
           name: productName,
@@ -242,16 +233,21 @@
           lastPurchase: new Date().toISOString()
         });
       }
-      console.log('Statistiche aggiornate!');
     }
 
     function handlePhotoSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      if (file.size > 2 * 1024 * 1024) {
-        alert('La foto è troppo grande. Massimo 2MB.');
+      // 2MB = 2 * 1024 * 1024 bytes
+      const maxSize = 2097152; // 2MB in bytes
+      
+      if (file.size > maxSize) {
+        const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+        alert(`La foto è troppo grande (${sizeMB}MB). Massimo 2MB.`);
         event.target.value = '';
+        state.selectedPhoto = null;
+        render();
         return;
       }
 
@@ -259,6 +255,10 @@
       reader.onload = (e) => {
         state.selectedPhoto = e.target.result;
         render();
+      };
+      reader.onerror = () => {
+        alert('Errore nel caricamento della foto. Riprova!');
+        event.target.value = '';
       };
       reader.readAsDataURL(file);
     }
@@ -394,17 +394,14 @@
             </div>
           ` : ''}
 
-          <!-- Statistics Modal -->
           ${state.showStatistics ? `
             <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onclick="hideStatistics()">
               <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-6 rounded-t-3xl">
                   <div class="flex items-center justify-between">
                     <div>
-                      <h2 class="text-2xl font-bold flex items-center gap-2">
-                        📊 Statistiche Acquisti
-                      </h2>
-                      <p class="text-blue-100 text-sm mt-1">I tuoi prodotti più comprati</p>
+                      <h2 class="text-2xl font-bold">📊 Statistiche Acquisti</h2>
+                      <p class="text-blue-100 text-sm mt-1">I prodotti più comprati</p>
                     </div>
                     <button onclick="hideStatistics()" class="w-10 h-10 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 flex items-center justify-center text-2xl">×</button>
                   </div>
@@ -414,22 +411,20 @@
                   ${state.statistics.length === 0 ? `
                     <div class="text-center py-12">
                       <div class="text-6xl mb-4">📈</div>
-                      <p class="text-gray-400 text-lg">Nessun acquisto registrato ancora!</p>
-                      <p class="text-gray-400 text-sm mt-2">Spunta i prodotti per iniziare a tracciare le statistiche</p>
+                      <p class="text-gray-400 text-lg">Nessun acquisto registrato!</p>
+                      <p class="text-gray-400 text-sm mt-2">Spunta i prodotti per tracciare le statistiche</p>
                     </div>
                   ` : `
                     <div class="space-y-3">
                       ${state.statistics
                         .sort((a, b) => (b.count || 0) - (a.count || 0))
-                        .map((stat, index) => {
+                        .map(stat => {
                           const maxCount = Math.max(...state.statistics.map(s => s.count || 0));
                           const percentage = ((stat.count || 0) / maxCount) * 100;
                           return `
-                            <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 hover:shadow-md transition-shadow">
+                            <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4">
                               <div class="flex items-center gap-3 mb-2">
-                                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-2xl shadow-md">
-                                  ${stat.icon}
-                                </div>
+                                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-2xl">${stat.icon}</div>
                                 <div class="flex-1">
                                   <div class="font-semibold text-gray-800">${stat.name}</div>
                                   <div class="text-xs text-gray-500">Ultimo: ${new Date(stat.lastPurchase).toLocaleDateString('it-IT')}</div>
@@ -439,14 +434,13 @@
                                   <div class="text-xs text-gray-500">acquisti</div>
                                 </div>
                               </div>
-                              <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                <div class="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                              <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full" style="width: ${percentage}%"></div>
                               </div>
                             </div>
                           `;
                         }).join('')}
                     </div>
-                    
                     <div class="mt-6 p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
                       <div class="text-sm font-semibold text-blue-800 mb-2">📈 Riepilogo</div>
                       <div class="grid grid-cols-2 gap-3 text-center">
