@@ -148,6 +148,7 @@
         
         // Se il prodotto viene spuntato (acquistato), aggiorna le statistiche
         if (newCheckedState) {
+          console.log('Aggiornamento statistiche per:', item.name);
           await updateStatistics(item.name, item.icon);
         }
       }
@@ -214,26 +215,34 @@
     }
 
     async function updateStatistics(productName, productIcon) {
+      console.log('updateStatistics chiamata con:', productName, productIcon);
       const normalizedName = productName.toLowerCase();
       const existingStat = state.statistics.find(s => s.name.toLowerCase() === normalizedName);
+      
+      console.log('Statistica esistente:', existingStat);
       
       if (existingStat) {
         // Incrementa il contatore
         const statRef = ref(db, `statistics/${existingStat.id}`);
+        const newCount = (existingStat.count || 0) + 1;
+        console.log('Incremento contatore a:', newCount);
         await update(statRef, {
-          count: (existingStat.count || 0) + 1,
+          count: newCount,
           lastPurchase: new Date().toISOString()
         });
       } else {
         // Crea nuova statistica
+        console.log('Creazione nuova statistica');
         const newStatRef = push(statisticsRef);
         await set(newStatRef, {
           name: productName,
           icon: productIcon,
           count: 1,
+          firstPurchase: new Date().toISOString(),
           lastPurchase: new Date().toISOString()
         });
       }
+      console.log('Statistiche aggiornate!');
     }
 
     function handlePhotoSelect(event) {
