@@ -249,8 +249,8 @@
       const file = event.target.files[0];
       if (!file) return;
 
-      if (file.size > 1024 * 1024) {
-        alert('La foto è troppo grande. Massimo 1MB.');
+      if (file.size > 2 * 1024 * 1024) {
+        alert('La foto è troppo grande. Massimo 2MB.');
         event.target.value = '';
         return;
       }
