@@ -1,0 +1,44 @@
+name: Controllo Lista Spesa
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # ogni 5 minuti
+  workflow_dispatch:
+
+jobs:
+  check_lista:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install firebase-admin requests
+
+      - name: Decode Firebase key
+        run: |
+          echo "${{ secrets.FIREBASE_KEY_BASE64 }}" | base64 --decode > firebase-key.json
+
+      - name: Run check script
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FIREBASE_DB_URL: ${{ secrets.FIREBASE_DB_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python check_lista_spesa.py
+
+      - name: Commit updated cache (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lista_spesa_cache.json
+          git commit -m "chore: update lista_spesa_cache.json" || echo "No changes to commit"
+          git push
