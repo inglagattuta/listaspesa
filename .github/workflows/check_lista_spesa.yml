@@ -2,8 +2,11 @@ name: Controllo Lista Spesa
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # ogni 5 minuti
+    - cron: "*/5 * * * *"
   workflow_dispatch:
+
+permissions:
+  contents: write   # <--- AGGIUNTO
 
 jobs:
   check_lista:
