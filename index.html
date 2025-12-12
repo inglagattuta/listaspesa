@@ -24,40 +24,197 @@
   <div id="app" class="p-3 md:p-4"></div>
 
   <script type="module">
-    let state = {
-      items: [
-        {id:1, name:'Pesto', checked:false},
-        {id:2, name:'Pane', checked:false},
-        {id:3, name:'Pomodoro', checked:false},
-        {id:4, name:'Pasta', checked:false}
-      ],
-      showRecipes: false,
-      recipes: []
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getDatabase, ref, onValue, set, push, remove, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBmWi-5wQ97PA4TanAC5mHFAqmsNR9aUpE",
+      authDomain: "lista-spesa-famiglia-95127.firebaseapp.com",
+      databaseURL: "https://lista-spesa-famiglia-95127-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "lista-spesa-famiglia-95127",
+      storageBucket: "lista-spesa-famiglia-95127.firebasestorage.app",
+      messagingSenderId: "131762886904",
+      appId: "1:131762886904:web:068e00b3e2e08235e9c30d"
     };
 
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let state = {
+      items: [],
+      frequentItems: [],
+      statistics: [],
+      showFrequent: true,
+      showStatistics: false,
+      showRecipes: false,
+      recipes: [],
+      loadingRecipes: false,
+      frequentSortMode: 'usage', 
+      newItem: '',
+      selectedPhoto: null,
+      message: null,
+      showMessageInput: false
+    };
+
+    const itemsRef = ref(db, 'shoppingList');
+    const frequentRef = ref(db, 'frequentItems');
+    const messageRef = ref(db, 'familyMessage');
+    const statisticsRef = ref(db, 'statistics');
+
+    onValue(itemsRef, (snapshot) => {
+      const data = snapshot.val();
+      state.items = data ? Object.keys(data).map(key => ({id: key, ...data[key]})) : [];
+      render();
+    });
+
+    onValue(frequentRef, (snapshot) => {
+      const data = snapshot.val();
+      state.frequentItems = data ? Object.keys(data).map(key => ({id: key, ...data[key]})) : [];
+      render();
+    });
+
+    onValue(messageRef, (snapshot) => {
+      state.message = snapshot.val();
+      render();
+    });
+
+    onValue(statisticsRef, (snapshot) => {
+      const data = snapshot.val();
+      state.statistics = data ? Object.keys(data).map(key => ({id: key, ...data[key]})) : [];
+      render();
+    });
+
+    function getProductIcon(name) {
+      const n = name.toLowerCase();
+      if (n.includes('mela') || n.includes('mele')) return '🍎';
+      if (n.includes('banana') || n.includes('banane')) return '🍌';
+      if (n.includes('pane')) return '🍞';
+      if (n.includes('latte')) return '🥛';
+      if (n.includes('pasta')) return '🍝';
+      if (n.includes('pomodor')) return '🍅';
+      if (n.includes('formaggio')) return '🧀';
+      if (n.includes('uova')) return '🥚';
+      if (n.includes('acqua')) return '💧';
+      if (n.includes('caffè')) return '☕';
+      return '🛒';
+    }
+
+    async function addItem() {
+      const name = state.newItem.trim();
+      if (!name) return;
+
+      const icon = getProductIcon(name);
+      const newItemRef = push(itemsRef);
+      const itemData = {
+        name,
+        icon,
+        checked: false,
+        addedAt: new Date().toISOString()
+      };
+      if (state.selectedPhoto) itemData.photo = state.selectedPhoto;
+
+      await set(newItemRef, itemData);
+
+      const exists = state.frequentItems.find(f => f.name.toLowerCase() === name.toLowerCase());
+      if (!exists) {
+        const newFreqRef = push(frequentRef);
+        await set(newFreqRef, {
+          name,
+          icon,
+          usageCount: 1,
+          lastUsed: new Date().toISOString()
+        });
+      }
+
+      state.newItem = '';
+      state.selectedPhoto = null;
+      render();
+      setTimeout(() => {
+        document.getElementById('newItemInput')?.focus();
+        document.getElementById('photoInput') && (document.getElementById('photoInput').value = '');
+      }, 50);
+    }
+
+    async function toggleItem(id) {
+      const item = state.items.find(i => i.id === id);
+      if (item) {
+        const itemRef = ref(db, `shoppingList/${id}`);
+        const newCheckedState = !item.checked;
+        await update(itemRef, { checked: newCheckedState });
+        if (newCheckedState) await updateStatistics(item.name, item.icon);
+      }
+    }
+
+    async function getRecipeSuggestions() {
+      state.loadingRecipes = true;
+      state.showRecipes = true;
+      render();
+
+      const checkedItems = state.items.filter(i => i.checked).map(i => i.name);
+      if (checkedItems.length === 0) {
+        state.recipes = [{
+          title: "Nessun prodotto nel carrello",
+          description: "Spunta alcuni prodotti per ricevere suggerimenti di ricette!"
+        }];
+        state.loadingRecipes = false;
+        render();
+        return;
+      }
+
+      try {
+        // Chiamata a Gemini
+        const response = await fetch("https://generative.googleapis.com/v1beta2/models/text-bison-001:generateText", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer AIzaSyDKCyRUnX-weGU-wetydzkrFiWd58GmgaI"
+          },
+          body: JSON.stringify({
+            prompt: `Ho questi ingredienti: ${checkedItems.join(', ')}. Suggeriscimi 3 ricette, con titolo e breve descrizione.`,
+            temperature: 0.7,
+            maxOutputTokens: 300
+          })
+        });
+        const data = await response.json();
+        const textOutput = data?.candidates?.[0]?.content || '';
+        state.recipes = textOutput.split('\n').filter(t => t.trim() !== '').map((line, idx) => ({
+          title: line.split('-')[0] || `Ricetta ${idx+1}`,
+          description: line.split('-')[1] || ''
+        }));
+      } catch (error) {
+        console.error(error);
+        state.recipes = [{ title: "Errore connessione", description: "Impossibile contattare Gemini API" }];
+      }
+
+      state.loadingRecipes = false;
+      render();
+    }
+
     function render() {
-      const app = document.getElementById('app');
-      app.innerHTML = `
+      const uncheckedCount = state.items.filter(i => !i.checked).length;
+      const checkedCount = state.items.filter(i => i.checked).length;
+
+      document.getElementById('app').innerHTML = `
         <div class="max-w-4xl mx-auto pb-6">
           <div class="bg-white rounded-2xl shadow-xl p-4 md:p-6 mb-4">
             <div class="flex flex-col gap-2">
               ${state.items.map(item => `
                 <div class="flex items-center gap-2">
-                  <input type="checkbox" ${item.checked?'checked':''} onchange="toggleItem(${item.id})" class="w-5 h-5"/>
+                  <input type="checkbox" ${item.checked?'checked':''} onchange="toggleItem('${item.id}')" class="w-5 h-5"/>
                   <span class="text-gray-800 font-semibold">${item.name}</span>
                 </div>
               `).join('')}
-              <button onclick="getRecipes()" class="mt-2 p-2 bg-purple-500 text-white rounded-xl font-semibold">Mostra Ricette</button>
+              <button onclick="getRecipeSuggestions()" class="mt-2 p-2 bg-purple-500 text-white rounded-xl font-semibold">Mostra Ricette</button>
             </div>
           </div>
 
           ${state.showRecipes ? `
             <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onclick="state.showRecipes=false; render()">
               <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative" onclick="event.stopPropagation()">
-                <button class="close-btn absolute top-4 right-4 text-2xl font-bold text-gray-700 hover:text-gray-900" onclick="state.showRecipes=false; render()">×</button>
+                <button class="absolute top-4 right-4 text-2xl font-bold text-gray-700 hover:text-gray-900" onclick="state.showRecipes=false; render()">×</button>
                 <div class="p-6">
                   <h2 class="text-2xl font-bold mb-4">👨‍🍳 Ricette Consigliate</h2>
-                  ${state.recipes.length === 0 ? `<p class="text-gray-500">Nessuna ricetta trovata.</p>` : ''}
+                  ${state.loadingRecipes ? `<p class="text-gray-600">Sto cercando ricette...</p>` : ''}
                   ${state.recipes.map((r, idx) => `
                     <div class="mb-3 p-4 bg-orange-50 rounded-xl border-2 border-orange-200">
                       <h3 class="font-bold text-lg">${r.title}</h3>
@@ -72,47 +229,8 @@
       `;
     }
 
-    function toggleItem(id) {
-      const item = state.items.find(i=>i.id===id);
-      if(item) item.checked = !item.checked;
-      render();
-    }
-
-    async function getRecipes() {
-      const selectedIngredients = state.items.filter(i => i.checked).map(i => i.name.toLowerCase());
-      if(selectedIngredients.length === 0){
-        alert("Seleziona almeno un ingrediente!");
-        return;
-      }
-
-      try {
-        const response = await fetch("https://generative.googleapis.com/v1beta2/models/text-bison-001:generateText", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer AIzaSyDKCyRUnX-weGU-wetydzkrFiWd58GmgaI"
-          },
-          body: JSON.stringify({
-            prompt: `Ho questi ingredienti nella mia lista della spesa: ${selectedIngredients.join(', ')}. Consigliami 3 ricette deliziose, con titolo e breve descrizione, basate su questi ingredienti.`,
-            temperature: 0.7,
-            maxOutputTokens: 300
-          })
-        });
-
-        const data = await response.json();
-        let textOutput = data?.candidates?.[0]?.content || "";
-        state.recipes = textOutput.split('\n').filter(t => t.trim() !== '').map((line, idx) => ({
-          title: line.split('-')[0] || `Ricetta ${idx+1}`,
-          description: line.split('-')[1] || ''
-        }));
-      } catch(err){
-        console.error(err);
-        state.recipes = [{title:'Errore connessione', description:'Impossibile contattare Gemini API'}];
-      }
-
-      state.showRecipes = true;
-      render();
-    }
+    window.toggleItem = toggleItem;
+    window.getRecipeSuggestions = getRecipeSuggestions;
 
     render();
   </script>
