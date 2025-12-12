@@ -157,7 +157,7 @@
       state.showMessageInput = false;
       render();
     }
-    async function deleteMessage() { await remove(messageRef); state.showMessageInput = false; }
+    async function deleteMessage() { await remove(messageRef); state.showMessageInput = false; render(); }
 
     async function updateStatistics(name, icon) {
       const norm = name.toLowerCase();
@@ -180,32 +180,18 @@
       reader.readAsDataURL(file);
     }
 
-    async function getRecipeSuggestions() {
-      state.loadingRecipes = true;
-      render();
-      const checkedItems = state.items.filter(i=>i.checked).map(i=>i.name.toLowerCase());
-
-      // ESEMPIO: chiamata a Gemini API (finta demo, va sostituita con chiamata reale)
-      let suggestedRecipes = [];
-      try {
-        const prompt = `Consiglia ricette in base ai seguenti ingredienti: ${checkedItems.join(', ')}`;
-        // Chiamata reale a Gemini API usando fetch o altra libreria, es:
-        // const response = await fetch('https://gemini.example.com/api', {...});
-        // suggestedRecipes = await response.json();
-        // Per ora uso demo statica:
-        suggestedRecipes = checkedItems.includes('pesto') && checkedItems.includes('pane') ? 
-          [{title:"Pasta al Pesto", description:"Deliziosa pasta con pesto e pane", ingredients:["pasta","pesto","pane"], time:"20 min"}] :
-          [
-            {title:"Insalata di mele e formaggio", description:"Fresca e veloce con mele, formaggio e noci", ingredients:["mele","formaggio","noci","olio","sale","pepe"], time:"10 min"},
-            {title:"Pasta al pomodoro veloce", description:"Pasta semplice con salsa di pomodoro e basilico", ingredients:["pasta","pomodoro","olio","sale","pepe","basilico"], time:"15 min"},
-            {title:"Banana smoothie", description:"Frullato dolce e sano con banana e latte", ingredients:["banana","latte","miele"], time:"5 min"}
-          ];
-      } catch(e) { console.error(e); }
-
-      state.recipes = suggestedRecipes;
-      state.showRecipes = true;
-      state.loadingRecipes = false;
-      render();
+    function getRecipeSuggestions() {
+      const checkedItems = state.items.filter(i=>i.checked).map(i=>i.name);
+      state.recipes = checkedItems.length>0 ? [
+        {title:"Insalata di mele e formaggio", description:"Fresca e veloce con mele, formaggio e noci", ingredients:["mele","formaggio","noci","olio","sale","pepe"], time:"10 min"},
+        {title:"Pasta al pomodoro veloce", description:"Pasta semplice con salsa di pomodoro e basilico", ingredients:["pasta","pomodoro","olio","sale","pepe","basilico"], time:"15 min"},
+        {title:"Banana smoothie", description:"Frullato dolce e sano con banana e latte", ingredients:["banana","latte","miele"], time:"5 min"}
+      ] : [{
+        title:"Nessun prodotto selezionato",
+        description:"Spunta alcuni prodotti per ricevere suggerimenti",
+        ingredients:[], time:""
+      }];
+      state.showRecipes = true; render();
     }
 
     function render() {
@@ -215,9 +201,13 @@
       
       document.getElementById('app').innerHTML = `
       <div class="max-w-4xl mx-auto pb-6">
+
+        <!-- Bacheca -->
         ${state.message ? `<div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-2xl shadow-lg p-4 mb-4 relative">
           <button onclick="deleteMessage()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-600 flex items-center justify-center">×</button>
           <div class="flex items-start gap-3 pr-8"><div class="text-3xl">📌</div><div class="flex-1"><div class="text-xs text-amber-600 font-semibold mb-1">BACHECA FAMIGLIA</div><div class="text-base text-gray-800 font-medium">${state.message.text}</div></div></div></div>` : ''}
+
+        <!-- Lista principale -->
         <div class="bg-white rounded-2xl shadow-xl p-4 md:p-6 mb-4">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
@@ -260,12 +250,21 @@
 
         <!-- Prodotti frequenti -->
         <div class="mt-6">
-          <h2 class="text-lg font-semibold text-gray-700 mb-2">Prodotti Frequenti</h2>
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="text-lg font-semibold text-gray-700">Prodotti Frequenti</h2>
+            <select onchange="state.frequentSortMode=this.value; render();" class="text-sm border rounded p-1">
+              <option value="usage" ${state.frequentSortMode==='usage'?'selected':''}>Per acquisti</option>
+              <option value="alphabetical" ${state.frequentSortMode==='alphabetical'?'selected':''}>Alfabetico</option>
+            </select>
+          </div>
           <div class="flex flex-wrap gap-3">
             ${sortedFrequent.map(f => `
-              <div class="flex items-center gap-2 bg-white rounded-xl p-2 shadow hover:shadow-md cursor-pointer" onclick="addFromFrequent('${f.id}')">
+              <div class="flex flex-col items-center gap-1 bg-white rounded-xl p-2 shadow hover:shadow-md cursor-pointer" onclick="addFromFrequent('${f.id}')">
                 <div class="text-xl">${f.icon}</div>
                 <div class="text-sm font-medium">${f.name}</div>
+                <div class="flex gap-0.5">
+                  ${'★'.repeat(f.usageCount||1)}${'☆'.repeat(Math.max(0,5-(f.usageCount||1)))}
+                </div>
               </div>
             `).join('')}
           </div>
@@ -275,7 +274,7 @@
         ${state.showRecipes ? `
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onclick="state.showRecipes=false;render();">
           <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
-            <div class="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-t-3xl flex justify-between items-center">
+            <div class="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 flex justify-between items-center rounded-t-3xl">
               <div>
                 <h2 class="text-2xl font-bold">👨‍🍳 Suggerimenti Ricette</h2>
                 <p class="text-orange-100 text-sm mt-1">In base ai prodotti selezionati</p>
@@ -300,6 +299,28 @@
                     </div>
                   </div>`:''}
                 </div>`).join('')}
+            </div>
+          </div>
+        </div>` : ''}
+
+        <!-- Modal Statistiche -->
+        ${state.showStatistics ? `
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onclick="hideStatistics()">
+          <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-2xl font-bold">📊 Statistiche Acquisti</h2>
+              <button onclick="hideStatistics()" class="text-2xl text-red-500">×</button>
+            </div>
+            <div class="space-y-3">
+              ${state.statistics.map(s => `
+                <div class="flex justify-between items-center bg-gray-50 rounded-xl p-3">
+                  <div class="flex items-center gap-3">
+                    <div class="text-2xl">${s.icon}</div>
+                    <div class="text-sm font-medium">${s.name}</div>
+                  </div>
+                  <div class="text-sm text-gray-600">Acquistato: ${s.count || 0} volte</div>
+                </div>
+              `).join('')}
             </div>
           </div>
         </div>` : ''}
