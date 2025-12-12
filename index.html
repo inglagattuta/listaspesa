@@ -201,13 +201,9 @@
       
       document.getElementById('app').innerHTML = `
       <div class="max-w-4xl mx-auto pb-6">
-
-        <!-- Bacheca -->
         ${state.message ? `<div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-2xl shadow-lg p-4 mb-4 relative">
-          <button onclick="deleteMessage()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-600 flex items-center justify-center">×</button>
+          <button id="closeMessageBtn" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-600 flex items-center justify-center">×</button>
           <div class="flex items-start gap-3 pr-8"><div class="text-3xl">📌</div><div class="flex-1"><div class="text-xs text-amber-600 font-semibold mb-1">BACHECA FAMIGLIA</div><div class="text-base text-gray-800 font-medium">${state.message.text}</div></div></div></div>` : ''}
-
-        <!-- Lista principale -->
         <div class="bg-white rounded-2xl shadow-xl p-4 md:p-6 mb-4">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
@@ -248,38 +244,16 @@
           `).join('')}
         </div>
 
-        <!-- Prodotti frequenti -->
-        <div class="mt-6">
-          <div class="flex justify-between items-center mb-2">
-            <h2 class="text-lg font-semibold text-gray-700">Prodotti Frequenti</h2>
-            <select onchange="state.frequentSortMode=this.value; render();" class="text-sm border rounded p-1">
-              <option value="usage" ${state.frequentSortMode==='usage'?'selected':''}>Per acquisti</option>
-              <option value="alphabetical" ${state.frequentSortMode==='alphabetical'?'selected':''}>Alfabetico</option>
-            </select>
-          </div>
-          <div class="flex flex-wrap gap-3">
-            ${sortedFrequent.map(f => `
-              <div class="flex flex-col items-center gap-1 bg-white rounded-xl p-2 shadow hover:shadow-md cursor-pointer" onclick="addFromFrequent('${f.id}')">
-                <div class="text-xl">${f.icon}</div>
-                <div class="text-sm font-medium">${f.name}</div>
-                <div class="flex gap-0.5">
-                  ${'★'.repeat(f.usageCount||1)}${'☆'.repeat(Math.max(0,5-(f.usageCount||1)))}
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
         <!-- Modal Ricette -->
         ${state.showRecipes ? `
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onclick="state.showRecipes=false;render();">
-          <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
-            <div class="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 flex justify-between items-center rounded-t-3xl">
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-t-3xl flex items-center justify-between">
               <div>
                 <h2 class="text-2xl font-bold">👨‍🍳 Suggerimenti Ricette</h2>
                 <p class="text-orange-100 text-sm mt-1">In base ai prodotti selezionati</p>
               </div>
-              <button onclick="state.showRecipes=false;render();" class="w-10 h-10 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 flex items-center justify-center text-2xl">×</button>
+              <button id="closeRecipeBtn" class="w-10 h-10 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 flex items-center justify-center text-2xl">×</button>
             </div>
             <div class="p-6 space-y-4">
               ${state.recipes.map((recipe,index)=>`
@@ -303,30 +277,15 @@
           </div>
         </div>` : ''}
 
-        <!-- Modal Statistiche -->
-        ${state.showStatistics ? `
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onclick="hideStatistics()">
-          <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-2xl font-bold">📊 Statistiche Acquisti</h2>
-              <button onclick="hideStatistics()" class="text-2xl text-red-500">×</button>
-            </div>
-            <div class="space-y-3">
-              ${state.statistics.map(s => `
-                <div class="flex justify-between items-center bg-gray-50 rounded-xl p-3">
-                  <div class="flex items-center gap-3">
-                    <div class="text-2xl">${s.icon}</div>
-                    <div class="text-sm font-medium">${s.name}</div>
-                  </div>
-                  <div class="text-sm text-gray-600">Acquistato: ${s.count || 0} volte</div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        </div>` : ''}
-
       </div>
       `;
+
+      // Aggiungiamo listener alle X dei modali
+      const closeMsgBtn = document.getElementById('closeMessageBtn');
+      if(closeMsgBtn) closeMsgBtn.addEventListener('click', ()=>{ deleteMessage(); });
+
+      const closeRecipeBtn = document.getElementById('closeRecipeBtn');
+      if(closeRecipeBtn) closeRecipeBtn.addEventListener('click', ()=>{ state.showRecipes=false; render(); });
     }
 
     window.addItem = addItem;
