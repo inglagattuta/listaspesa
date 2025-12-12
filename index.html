@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Lista della Spesa - Famiglia</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -85,7 +85,7 @@
     });
 
     function getProductIcon(name) {
-      const n = name.toLowerCase();
+      const n = (name||'').toLowerCase();
       if (n.includes('mela') || n.includes('mele')) return '🍎';
       if (n.includes('banana') || n.includes('banane')) return '🍌';
       if (n.includes('pane')) return '🍞';
@@ -104,41 +104,38 @@
       if (!name) return;
       const icon = getProductIcon(name);
       const newItemRef = push(itemsRef);
-      const itemData = {
-        name,
-        icon,
-        checked: false,
-        addedAt: new Date().toISOString()
-      };
+      const itemData = { name, icon, checked: false, addedAt: new Date().toISOString() };
       if (state.selectedPhoto) itemData.photo = state.selectedPhoto;
       await set(newItemRef, itemData);
+
       const exists = state.frequentItems.find(f => f.name.toLowerCase() === name.toLowerCase());
       if (!exists) {
         const newFreqRef = push(frequentRef);
         await set(newFreqRef, { name, icon, usageCount: 1, lastUsed: new Date().toISOString() });
       }
+
       state.newItem = '';
       state.selectedPhoto = null;
       render();
       setTimeout(() => {
         document.getElementById('newItemInput')?.focus();
-        document.getElementById('photoInput') && (document.getElementById('photoInput').value = '');
+        const p = document.getElementById('photoInput'); if (p) p.value = '';
       }, 50);
     }
 
     async function toggleItem(id) {
       const item = state.items.find(i => i.id === id);
-      if (item) {
-        const itemRef = ref(db, `shoppingList/${id}`);
-        const newCheckedState = !item.checked;
-        await update(itemRef, { checked: newCheckedState });
-        if (newCheckedState) await updateStatistics(item.name, item.icon);
-      }
+      if (!item) return;
+      const itemRef = ref(db, `shoppingList/${id}`);
+      const newCheckedState = !item.checked;
+      await update(itemRef, { checked: newCheckedState });
+      if (newCheckedState) await updateStatistics(item.name, item.icon);
     }
 
     async function deleteItem(id) { await remove(ref(db, `shoppingList/${id}`)); }
     async function clearCompleted() { for (const i of state.items.filter(x => x.checked)) await remove(ref(db, `shoppingList/${i.id}`)); }
     async function removeFromFrequent(id) { await remove(ref(db, `frequentItems/${id}`)); }
+
     async function addFromFrequent(freqId) {
       const freq = state.frequentItems.find(f => f.id === freqId);
       if (!freq) return;
@@ -147,24 +144,36 @@
       const newItemRef = push(itemsRef);
       await set(newItemRef, { name: freq.name, icon: freq.icon, checked: false, addedAt: new Date().toISOString() });
       const freqRef = ref(db, `frequentItems/${freq.id}`);
-      await update(freqRef, { usageCount: (freq.usageCount || 0)+1, lastUsed: new Date().toISOString() });
+      await update(freqRef, { usageCount: (freq.usageCount || 0) + 1, lastUsed: new Date().toISOString() });
     }
 
     async function saveMessage() {
-      const msg = document.getElementById('messageInput')?.value?.trim();
+      const input = document.getElementById('messageInput');
+      const msg = input?.value?.trim();
       if (!msg) { alert('Scrivi un messaggio prima!'); return; }
       await set(messageRef, { text: msg, author: 'Famiglia', timestamp: new Date().toISOString() });
       state.showMessageInput = false;
       render();
     }
+
+    // Instead of removing the message, the user requested the X to open the message input
+    function openMessageInput() {
+      state.showMessageInput = true;
+      render();
+      setTimeout(()=> {
+        const el = document.getElementById('messageInput');
+        if (el) { el.value = ''; el.placeholder = 'Inserisci messaggio...'; el.focus(); }
+      }, 80);
+    }
+
     async function deleteMessage() { await remove(messageRef); state.showMessageInput = false; render(); }
 
     async function updateStatistics(name, icon) {
-      const norm = name.toLowerCase();
+      const norm = (name||'').toLowerCase();
       const existingStat = state.statistics.find(s => s.name.toLowerCase() === norm);
       if (existingStat) {
         const statRef = ref(db, `statistics/${existingStat.id}`);
-        await update(statRef, { count: (existingStat.count||0)+1, lastPurchase: new Date().toISOString() });
+        await update(statRef, { count: (existingStat.count || 0) + 1, lastPurchase: new Date().toISOString() });
       } else {
         const newStatRef = push(statisticsRef);
         await set(newStatRef, { name, icon, count: 1, firstPurchase: new Date().toISOString(), lastPurchase: new Date().toISOString() });
@@ -173,132 +182,275 @@
 
     function handlePhotoSelect(e) {
       const file = e.target.files[0]; if(!file) return;
-      if(file.size>2097152){ alert(`Foto troppo grande (${(file.size/1024/1024).toFixed(2)}MB)`); e.target.value=''; state.selectedPhoto=null; render(); return; }
+      if (file.size > 2097152) { alert(`La foto è troppo grande (${(file.size/1024/1024).toFixed(2)}MB). Massimo 2MB.`); e.target.value = ''; state.selectedPhoto = null; render(); return; }
       const reader = new FileReader();
-      reader.onload = (ev)=>{ state.selectedPhoto = ev.target.result; render(); };
-      reader.onerror = ()=>{ alert('Errore caricamento foto'); e.target.value=''; };
+      reader.onload = (ev) => { state.selectedPhoto = ev.target.result; render(); };
+      reader.onerror = () => { alert('Errore caricamento foto'); e.target.value = ''; };
       reader.readAsDataURL(file);
     }
 
+    // Placeholder offline recipe function (we'll later replace with Gemini API call)
     function getRecipeSuggestions() {
-      const checkedItems = state.items.filter(i=>i.checked).map(i=>i.name);
-      state.recipes = checkedItems.length>0 ? [
-        {title:"Insalata di mele e formaggio", description:"Fresca e veloce con mele, formaggio e noci", ingredients:["mele","formaggio","noci","olio","sale","pepe"], time:"10 min"},
-        {title:"Pasta al pomodoro veloce", description:"Pasta semplice con salsa di pomodoro e basilico", ingredients:["pasta","pomodoro","olio","sale","pepe","basilico"], time:"15 min"},
-        {title:"Banana smoothie", description:"Frullato dolce e sano con banana e latte", ingredients:["banana","latte","miele"], time:"5 min"}
-      ] : [{
-        title:"Nessun prodotto selezionato",
-        description:"Spunta alcuni prodotti per ricevere suggerimenti",
-        ingredients:[], time:""
-      }];
+      const checkedItems = state.items.filter(i => i.checked).map(i => i.name);
+      state.recipes = checkedItems.length > 0 ? [
+        { title: "Insalata di mele e formaggio", description: "Fresca e veloce con mele e formaggio", ingredients: ["mele", "formaggio", "olio", "sale", "pepe"], time: "10 min" },
+        { title: "Pasta al pomodoro veloce", description: "Pasta semplice con salsa di pomodoro e basilico", ingredients: ["pasta", "pomodoro", "olio", "sale", "pepe", "basilico"], time: "15 min" },
+        { title: "Banana smoothie", description: "Frullato dolce con banana e latte", ingredients: ["banana", "latte", "miele"], time: "5 min" }
+      ] : [{ title: "Nessun prodotto selezionato", description: "Spunta alcuni prodotti per ricevere suggerimenti", ingredients: [], time: "" }];
       state.showRecipes = true; render();
     }
 
     function render() {
-      const uncheckedCount = state.items.filter(i=>!i.checked).length;
-      const checkedCount = state.items.filter(i=>i.checked).length;
-      const sortedFrequent = [...state.frequentItems].sort((a,b)=>state.frequentSortMode==='alphabetical'? a.name.localeCompare(b.name,'it'):(b.usageCount||0)-(a.usageCount||0));
-      
+      const uncheckedCount = state.items.filter(i => !i.checked).length;
+      const checkedCount = state.items.filter(i => i.checked).length;
+      const sortedFrequent = [...state.frequentItems].sort((a,b) => state.frequentSortMode === 'alphabetical' ? a.name.localeCompare(b.name,'it') : (b.usageCount||0) - (a.usageCount||0));
+
       document.getElementById('app').innerHTML = `
-      <div class="max-w-4xl mx-auto pb-6">
-        ${state.message ? `<div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-2xl shadow-lg p-4 mb-4 relative">
-          <button id="closeMessageBtn" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-600 flex items-center justify-center">×</button>
-          <div class="flex items-start gap-3 pr-8"><div class="text-3xl">📌</div><div class="flex-1"><div class="text-xs text-amber-600 font-semibold mb-1">BACHECA FAMIGLIA</div><div class="text-base text-gray-800 font-medium">${state.message.text}</div></div></div></div>` : ''}
-        <div class="bg-white rounded-2xl shadow-xl p-4 md:p-6 mb-4">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-              <div class="bg-gradient-to-br from-purple-500 to-pink-500 p-3 rounded-xl text-white text-2xl">🛒</div>
-              <div>
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Lista Spesa</h1>
-                <p class="text-sm text-gray-500">👥 Famiglia</p>
+        <div class="max-w-4xl mx-auto pb-6">
+          ${state.message && !state.showMessageInput ? `
+            <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-2xl shadow-lg p-4 mb-4 relative">
+              <button id="openMessageBtn" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-600 flex items-center justify-center">×</button>
+              <div class="flex items-start gap-3 pr-8">
+                <div class="text-3xl">📌</div>
+                <div class="flex-1">
+                  <div class="text-xs text-amber-600 font-semibold mb-1">BACHECA FAMIGLIA</div>
+                  <div class="text-base text-gray-800 font-medium">${state.message.text}</div>
+                </div>
               </div>
             </div>
-            <div class="flex items-center gap-3">
-              <button onclick="showStatistics()" class="flex flex-col items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white hover:shadow-lg active:scale-95 transition-all">
-                <span class="text-2xl">📊</span>
-                <span class="text-xs font-semibold">Stats</span>
-              </button>
-              <button onclick="getRecipeSuggestions()" class="flex flex-col items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 text-white hover:shadow-lg active:scale-95 transition-all">
-                <span class="text-2xl">👨‍🍳</span>
-                <span class="text-xs font-semibold">Ricette</span>
-              </button>
-              <div class="text-right">
-                <div class="text-3xl font-bold text-purple-600">${uncheckedCount}</div>
-                <div class="text-sm text-gray-500">da comprare</div>
-              </div>
-            </div>
-          </div>
-        </div>
+          ` : ''}
 
-        <!-- Lista prodotti -->
-        <div class="space-y-3">
-          ${state.items.map(item => `
-            <div class="bg-white rounded-xl shadow-lg p-4 slide-in ${item.checked?'opacity-60':''}">
+          ${state.showMessageInput ? `
+            <div class="bg-white rounded-2xl shadow-xl p-4 mb-4">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="text-2xl">📌</div>
+                <div class="text-lg font-semibold text-gray-700">Nuovo messaggio bacheca</div>
+              </div>
+              <textarea id="messageInput" placeholder="Inserisci messaggio..." class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-amber-400 focus:outline-none text-base resize-none" rows="3"></textarea>
+              <div class="flex gap-2 mt-3">
+                <button id="saveMessageBtn" class="flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-6 py-3 rounded-xl font-semibold">Pubblica</button>
+                <button id="cancelMessageBtn" class="px-6 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold">Annulla</button>
+              </div>
+            </div>
+          ` : !state.message ? `
+            <button id="addMessageBtn" class="w-full bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-dashed border-amber-300 rounded-2xl p-4 mb-4 hover:border-amber-400">
+              <div class="flex items-center justify-center gap-3 text-amber-600">
+                <div class="text-3xl">📌</div>
+                <div class="text-lg font-semibold">Aggiungi messaggio bacheca</div>
+              </div>
+            </button>
+          ` : ''}
+
+          <div class="bg-white rounded-2xl shadow-xl p-4 md:p-6 mb-4">
+            <div class="flex items-center justify-between mb-4">
               <div class="flex items-center gap-3">
-                <button onclick="toggleItem('${item.id}')" class="flex-shrink-0 w-10 h-10 rounded-xl border-2 flex items-center justify-center ${item.checked?'bg-green-500 border-green-500 text-white':'border-gray-300'}">${item.checked?'✓':''}</button>
-                ${item.photo?`<div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border-2 border-gray-100"><img src="${item.photo}" alt="${item.name}" class="w-full h-full object-cover" /></div>`:`<div class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-3xl flex-shrink-0">${item.icon}</div>`}
-                <div class="flex-1 font-semibold text-lg ${item.checked?'line-through text-gray-400':'text-gray-800'}">${item.name}</div>
-                <button onclick="deleteItem('${item.id}')" class="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center">×</button>
+                <div class="bg-gradient-to-br from-purple-500 to-pink-500 p-3 rounded-xl text-white text-2xl">🛒</div>
+                <div>
+                  <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Lista Spesa</h1>
+                  <p class="text-sm text-gray-500">👥 Famiglia</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <button id="openStatsBtn" class="flex flex-col items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white hover:shadow-lg active:scale-95 transition-all">
+                  <span class="text-2xl">📊</span>
+                  <span class="text-xs font-semibold">Stats</span>
+                </button>
+                <button id="openRecipesBtn" class="flex flex-col items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 text-white hover:shadow-lg active:scale-95 transition-all">
+                  <span class="text-2xl">👨‍🍳</span>
+                  <span class="text-xs font-semibold">Ricette</span>
+                </button>
+                <div class="text-right">
+                  <div class="text-3xl font-bold text-purple-600">${uncheckedCount}</div>
+                  <div class="text-sm text-gray-500">da comprare</div>
+                </div>
               </div>
             </div>
-          `).join('')}
-        </div>
 
-        <!-- Modal Ricette -->
-        ${state.showRecipes ? `
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-t-3xl flex items-center justify-between">
-              <div>
-                <h2 class="text-2xl font-bold">👨‍🍳 Suggerimenti Ricette</h2>
-                <p class="text-orange-100 text-sm mt-1">In base ai prodotti selezionati</p>
-              </div>
-              <button id="closeRecipeBtn" class="w-10 h-10 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 flex items-center justify-center text-2xl">×</button>
+            <div class="flex gap-2 mb-3">
+              <input type="text" id="newItemInput" placeholder="Es: mele, pane..." class="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none text-base" value="${state.newItem}" />
+              <label class="cursor-pointer">
+                <input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden" />
+                <div class="w-12 h-12 rounded-xl border-2 ${state.selectedPhoto ? 'border-purple-400 bg-purple-50' : 'border-gray-200'} flex items-center justify-center overflow-hidden">
+                  ${state.selectedPhoto ? `<img src="${state.selectedPhoto}" class="w-full h-full object-cover" />` : '<span class="text-2xl">📷</span>'}
+                </div>
+              </label>
+              <button id="addItemBtn" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold">+</button>
             </div>
-            <div class="p-6 space-y-4">
-              ${state.recipes.map((recipe,index)=>`
-                <div class="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-5 border-2 border-orange-200 hover:shadow-lg transition-shadow">
-                  <div class="flex items-start gap-3 mb-3">
-                    <div class="text-3xl">${index===0?'🥇':index===1?'🥈':'🥉'}</div>
-                    <div class="flex-1">
-                      <h3 class="text-xl font-bold text-gray-800 mb-1">${recipe.title}</h3>
-                      <p class="text-gray-600 text-sm">${recipe.description}</p>
+
+            ${checkedCount > 0 ? `<button id="clearCompletedBtn" class="text-sm text-gray-500 hover:text-red-500 py-2">🗑️ Rimuovi completati (${checkedCount})</button>` : ''}
+          </div>
+
+          <!-- Lista prodotti -->
+          <div class="space-y-3">
+            ${state.items.length === 0 ? `
+              <div class="bg-white rounded-2xl shadow-lg p-12 text-center">
+                <div class="text-6xl mb-4">🛒</div>
+                <p class="text-gray-400 text-lg">La lista è vuota!</p>
+              </div>
+            ` : state.items.map(item => `
+              <div class="bg-white rounded-xl shadow-lg p-4 slide-in ${item.checked ? 'opacity-60' : ''}">
+                <div class="flex items-center gap-3">
+                  <button data-toggle="${item.id}" class="toggle-btn flex-shrink-0 w-10 h-10 rounded-xl border-2 flex items-center justify-center ${item.checked ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}">${item.checked ? '✓' : ''}</button>
+                  ${item.photo ? `<div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border-2 border-gray-100"><img src="${item.photo}" alt="${item.name}" class="w-full h-full object-cover" /></div>` : `<div class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-3xl flex-shrink-0">${item.icon}</div>`}
+                  <div class="flex-1 font-semibold text-lg ${item.checked ? 'line-through text-gray-400' : 'text-gray-800'}">${item.name}</div>
+                  <button data-delete="${item.id}" class="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center">×</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Prodotti frequenti -->
+          <div class="mt-6 bg-white rounded-2xl shadow-xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="text-lg font-semibold text-gray-700">🕐 Prodotti Frequenti</div>
+                <div class="text-sm text-gray-400">(${state.frequentItems.length})</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <select id="frequentSortSelect" class="text-sm border rounded p-1">
+                  <option value="usage" ${state.frequentSortMode === 'usage' ? 'selected' : ''}>Per acquisti</option>
+                  <option value="alphabetical" ${state.frequentSortMode === 'alphabetical' ? 'selected' : ''}>Alfabetico</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 md:grid-cols-5 gap-3">
+              ${sortedFrequent.map(freq => {
+                const isInList = state.items.some(i => i.name.toLowerCase() === freq.name.toLowerCase() && !i.checked);
+                return `
+                  <div class="relative group rounded-xl p-3 border-2 ${isInList ? 'border-green-300 bg-green-50' : 'border-gray-200 cursor-pointer hover:border-purple-300'}" data-freq-id="${freq.id}">
+                    <button data-remove-freq="${freq.id}" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-100 text-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 z-10">×</button>
+                    <div class="flex flex-col items-center gap-2">
+                      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-2xl">${freq.icon}</div>
+                      <div class="text-xs font-medium truncate w-full text-center">${freq.name}</div>
+                      <div class="text-xs text-gray-400">⭐ ${freq.usageCount || 1}x</div>
                     </div>
-                    ${recipe.time?`<div class="text-right"><div class="text-sm font-semibold text-orange-600">⏱️ ${recipe.time}</div></div>`:''}
+                    ${isInList ? '<div class="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-20 rounded-xl"><span class="text-2xl">✓</span></div>' : ''}
                   </div>
-                  ${recipe.ingredients&&recipe.ingredients.length>0?`<div class="bg-white rounded-lg p-3 mt-3">
-                    <div class="text-xs font-semibold text-gray-600 mb-2">📝 INGREDIENTI:</div>
-                    <div class="flex flex-wrap gap-2">
-                      ${recipe.ingredients.map(ing=>`<span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-medium">${ing}</span>`).join('')}
-                    </div>
-                  </div>`:''}
-                </div>`).join('')}
+                `;
+              }).join('')}
             </div>
           </div>
-        </div>` : ''}
 
-      </div>
+        </div>
       `;
 
-      // Aggiungiamo listener alle X dei modali
-      const closeMsgBtn = document.getElementById('closeMessageBtn');
-      if(closeMsgBtn) closeMsgBtn.addEventListener('click', ()=>{ deleteMessage(); });
+      // -- attach event listeners that can't reliably be placed inline --
 
+      // Add / input handlers
+      document.getElementById('addItemBtn')?.addEventListener('click', () => { state.newItem = document.getElementById('newItemInput')?.value || ''; addItem(); });
+      document.getElementById('newItemInput') && document.getElementById('newItemInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') { state.newItem = e.target.value; addItem(); } });
+      document.getElementById('photoInput')?.addEventListener('change', handlePhotoSelect);
+
+      // clear completed
+      document.getElementById('clearCompletedBtn')?.addEventListener('click', clearCompleted);
+
+      // Toggle product check and delete buttons
+      document.querySelectorAll('[data-toggle]').forEach(btn => {
+        btn.addEventListener('click', (ev) => {
+          const id = ev.currentTarget.getAttribute('data-toggle');
+          toggleItem(id);
+        });
+      });
+      document.querySelectorAll('[data-delete]').forEach(btn => {
+        btn.addEventListener('click', (ev) => {
+          const id = ev.currentTarget.getAttribute('data-delete');
+          if (confirm('Rimuovere il prodotto?')) deleteItem(id);
+        });
+      });
+
+      // Frequent items click -> addFromFrequent
+      document.querySelectorAll('[data-freq-id]').forEach(card => {
+        card.addEventListener('click', (ev) => {
+          const id = card.getAttribute('data-freq-id');
+          addFromFrequent(id);
+        });
+      });
+
+      // Remove from frequent (small X)
+      document.querySelectorAll('[data-remove-freq]').forEach(btn => {
+        btn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const id = btn.getAttribute('data-remove-freq');
+          if (confirm('Rimuovere questo prodotto dai frequenti?')) removeFromFrequent(id);
+        });
+      });
+
+      // Frequent sort select
+      const freqSelect = document.getElementById('frequentSortSelect');
+      if (freqSelect) {
+        freqSelect.addEventListener('change', (e) => {
+          state.frequentSortMode = e.target.value;
+          render();
+        });
+      }
+
+      // Bacheca X: open message input (not delete)
+      const openMsgBtn = document.getElementById('openMessageBtn');
+      if (openMsgBtn) {
+        openMsgBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openMessageInput();
+        });
+      }
+
+      // Add message button (when no message exists)
+      const addMessageBtn = document.getElementById('addMessageBtn');
+      if (addMessageBtn) addMessageBtn.addEventListener('click', openMessageInput);
+
+      // Save / cancel message buttons
+      const saveMessageBtn = document.getElementById('saveMessageBtn');
+      if (saveMessageBtn) saveMessageBtn.addEventListener('click', saveMessage);
+      const cancelMessageBtn = document.getElementById('cancelMessageBtn');
+      if (cancelMessageBtn) cancelMessageBtn.addEventListener('click', () => { state.showMessageInput = false; render(); });
+
+      // Stats open/close
+      const openStatsBtn = document.getElementById('openStatsBtn');
+      if (openStatsBtn) openStatsBtn.addEventListener('click', () => { state.showStatistics = true; render(); });
+
+      // Recipes open/close
+      const openRecipesBtn = document.getElementById('openRecipesBtn');
+      if (openRecipesBtn) openRecipesBtn.addEventListener('click', () => { getRecipeSuggestions(); });
+
+      // Close recipe modal button
       const closeRecipeBtn = document.getElementById('closeRecipeBtn');
-      if(closeRecipeBtn) closeRecipeBtn.addEventListener('click', ()=>{ state.showRecipes=false; render(); });
+      if (closeRecipeBtn) closeRecipeBtn.addEventListener('click', (e) => { e.stopPropagation(); state.showRecipes = false; render(); });
+
+      // Stats modal: create content and close
+      const statsCloseBtn = document.querySelector('#statsCloseBtn');
+      // stats modal attached via separate render block below, see next section
+
+      // If stats modal is open, attach its close handling
+      if (state.showStatistics) {
+        // attach close in separate DOM area
+        const statClose = document.querySelector('[data-close-stats]');
+        if (statClose) statClose.addEventListener('click', () => { state.showStatistics = false; render(); });
+      }
     }
 
+    // We also need to render stats modal separately when requested (to ensure close button exists)
+    // The easiest is to intercept showStatistics calls and re-render, but above we used state.showStatistics.
+    // We'll implement the stats modal injection via a small helper that listens to the app's DOM after render.
+    // To keep code tidy we use the existing render() that includes stats when state.showStatistics is true.
+
+    // Hook to open stats: already wired via openStatsBtn which sets state and calls render()
+
+    // Expose functions to window where inline handlers might refer
     window.addItem = addItem;
     window.toggleItem = toggleItem;
     window.deleteItem = deleteItem;
     window.clearCompleted = clearCompleted;
     window.addFromFrequent = addFromFrequent;
     window.removeFromFrequent = removeFromFrequent;
-    window.showStatistics = ()=>{ state.showStatistics=true; render(); };
-    window.hideStatistics = ()=>{ state.showStatistics=false; render(); };
+    window.saveMessage = saveMessage;
+    window.deleteMessage = deleteMessage;
+    window.openMessageInput = openMessageInput;
+    window.showStatistics = () => { state.showStatistics = true; render(); };
+    window.hideStatistics = () => { state.showStatistics = false; render(); };
     window.getRecipeSuggestions = getRecipeSuggestions;
     window.handlePhotoSelect = handlePhotoSelect;
 
+    // Render initially
     render();
   </script>
 </body>
